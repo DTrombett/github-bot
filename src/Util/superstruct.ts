@@ -270,3 +270,5 @@ export const sAPIWebhook: Describe<APIWebhook> = object({
 	url: optional(sString),
 	user: optional(sAPIUser),
 });
+
+export const sSnowflakeArray: Describe<Snowflake[]> = array(sSnowflake());
