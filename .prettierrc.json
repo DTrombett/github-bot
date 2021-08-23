@@ -1,0 +1,15 @@
+{
+  "printWidth": 100,
+  "quoteProps": "consistent",
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "embeddedLanguageFormatting": "auto",
+  "filepath": "src/",
+  "endOfLine": "crlf",
+  "semi": true,
+  "singleQuote": false,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "useTabs": true,
+  "parser": "typescript"
+}
