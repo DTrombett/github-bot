@@ -1,7 +1,7 @@
 import { promises } from "fs";
 import { join } from "path";
 import { assert } from "superstruct";
-import { sString } from ".";
+import { sString } from "./superstruct";
 
 const { readFile, writeFile } = promises;
 

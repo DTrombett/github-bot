@@ -3,8 +3,7 @@ import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
 import { assert } from "superstruct";
 import { GitHubClient } from "./gitHubClient";
-import { sClientOptions, sString } from "./Util/superstruct";
-import { IntentsFlags } from "./Util/Util";
+import { sClientOptions, sString, IntentsFlags } from "./Util";
 
 config();
 
@@ -15,6 +14,8 @@ const restGlobalRateLimit = 50;
 const restRequestTimeout = 10_000;
 const restTimeOffset = 1_000;
 const large_threshold = 1_000;
+const GuildMemberManager = 100;
+const UserManager = 1_000;
 
 const options: ClientOptions = {
 	intents: (1 << IntentsFlags.GUILDS) | (1 << IntentsFlags.GUILD_MESSAGES),
@@ -24,8 +25,7 @@ const options: ClientOptions = {
 		api: "https://canary.discord.com/api",
 	},
 	invalidRequestWarningInterval,
-	partials: ["CHANNEL", "GUILD_MEMBER", "MESSAGE", "REACTION", "USER"],
-	presence: { activities: [{ name: "with GitHub", type: Constants.ActivityTypes.PLAYING }] },
+	presence: { activities: [{ name: "With GitHub", type: Constants.ActivityTypes.PLAYING }] },
 	restGlobalRateLimit,
 	restRequestTimeout,
 	restTimeOffset,
@@ -44,6 +44,9 @@ const options: ClientOptions = {
 		ReactionUserManager: 0,
 		StageInstanceManager: 0,
 		VoiceStateManager: 0,
+		PresenceManager: 0,
+		GuildMemberManager,
+		UserManager,
 	}),
 	rejectOnRateLimit({ global, limit, method, path, route, timeout }) {
 		console.warn(
@@ -59,8 +62,7 @@ assert(token, sString);
 assert(options, sClientOptions);
 
 const client = new Client(options);
-const gitHubClient = new GitHubClient({ token, client });
-console.log(gitHubClient);
+new GitHubClient({ token, client }).login();
 
 client
 	.login()
