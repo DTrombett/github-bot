@@ -2,17 +2,24 @@ import type { ClientOptions, GuildMember, User } from "discord.js";
 import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
 import { assert } from "superstruct";
+import { inspect } from "util";
 import { GitHubClient } from "./gitHubClient";
-import { sClientOptions, sString, IntentsFlags } from "./Util";
+import { sClientOptions, sString, IntentsFlags, ConsoleAndFileLogger, FileLogger } from "./Util";
 
 config();
 
 const { GITHUB_TOKEN: token } = process.env;
+const { Events, ActivityTypes } = Constants;
 
-const invalidRequestWarningInterval = 1;
+const invalidRequestWarningInterval = 1000;
 const restGlobalRateLimit = 50;
 const restRequestTimeout = 10_000;
 const restTimeOffset = 1_000;
+const invalidatedExitCode = 502;
+const maxInvalidRequestsPerMinute = 1000;
+const invalidRequestExitCode = 508;
+const secondsIn10Minutes = 600;
+const millisecondsPerSecond = 1000;
 
 const limitedManagerOptions = {
 	maxSize: 1,
@@ -28,7 +35,7 @@ const options: ClientOptions = {
 		api: "https://canary.discord.com/api",
 	},
 	invalidRequestWarningInterval,
-	presence: { activities: [{ name: "With GitHub", type: Constants.ActivityTypes.PLAYING }] },
+	presence: { activities: [{ name: "With GitHub", type: ActivityTypes.PLAYING }] },
 	restGlobalRateLimit,
 	restRequestTimeout,
 	restTimeOffset,
@@ -52,7 +59,7 @@ const options: ClientOptions = {
 		VoiceStateManager: 0,
 	}),
 	rejectOnRateLimit({ global, limit, method, path, route, timeout }) {
-		console.warn(
+		ConsoleAndFileLogger.warn(
 			`Discord ${method} request queued on ${route} for ${
 				global ? "global" : "route"
 			} ratelimit.\nLimit of ${limit} requests reached for ${timeout}ms on path ${path}.`
@@ -65,38 +72,55 @@ assert(token, sString);
 assert(options, sClientOptions);
 
 const client = new Client(options)
-	.on(Constants.Events.CLIENT_READY, (readyClient) => {
-		console.log(
+	.on(Events.CLIENT_READY, (readyClient) => {
+		ConsoleAndFileLogger.info(
 			`Succesfully logged as ${client.user?.tag ?? "Unknown User"} in ${
 				readyClient.guilds.cache.size
 			} guilds.`
 		);
 	})
-	.on(Constants.Events.DEBUG, console.debug)
-	.on(Constants.Events.ERROR, console.error)
-	.on(Constants.Events.GUILD_CREATE, (guild) => {
-		console.log("Joined a new guild!");
-		console.log(guild);
+	.on(Events.DEBUG, (message) => {
+		ConsoleAndFileLogger.info(message);
 	})
-	.on(Constants.Events.GUILD_DELETE, (guild) => {
-		console.log("Left a guild!");
-		console.log(guild);
+	.on(Events.ERROR, (error) => {
+		console.error(error);
+		FileLogger.error(inspect(error));
 	})
-	.on(Constants.Events.INVALIDATED, () => process.exit())
-	.on(Constants.Events.INVALID_REQUEST_WARNING, console.warn)
-	.on(Constants.Events.RATE_LIMIT, console.error)
-	.on(Constants.Events.WARN, console.warn)
-	.on(Constants.Events.SHARD_DISCONNECT, (event, shard) => {
-		console.error(`Shard ${shard} disconnected for an error!`);
+	.on(Events.GUILD_CREATE, (guild) => {
+		ConsoleAndFileLogger.info("Joined a new guild!");
+		console.info(guild);
+	})
+	.on(Events.GUILD_DELETE, (guild) => {
+		ConsoleAndFileLogger.info("Left a guild!");
+		console.info(guild);
+		FileLogger.info(inspect(guild, { compact: false }));
+	})
+	.on(Events.INVALIDATED, () => process.exit(invalidatedExitCode))
+	.on(Events.INVALID_REQUEST_WARNING, ({ count, remainingTime }) => {
+		const requestsPerMinute =
+			count / (secondsIn10Minutes / (remainingTime / millisecondsPerSecond));
+		ConsoleAndFileLogger.info(`Registered ${requestsPerMinute} requests per minute.`);
+		if (requestsPerMinute >= maxInvalidRequestsPerMinute) process.exit(invalidRequestExitCode);
+	})
+	.on(Events.WARN, (warn) => {
+		ConsoleAndFileLogger.warn(warn);
+	})
+	.on(Events.SHARD_DISCONNECT, (event, shard) => {
+		ConsoleAndFileLogger.error(`Shard ${shard} disconnected for an error!`);
 		console.error(event);
+		FileLogger.error(inspect(event));
 	})
-	.on(Constants.Events.SHARD_RECONNECTING, (shard) => {
-		console.info(`Shard ${shard} is reconnecting...`);
+	.on(Events.SHARD_RECONNECTING, (shard) => {
+		ConsoleAndFileLogger.info(`Shard ${shard} is reconnecting...`);
 	})
-	.on(Constants.Events.SHARD_RESUME, (shard, events) => {
-		console.info(`Shard ${shard} resumed! Replayed ${events} events.`);
+	.on(Events.SHARD_RESUME, (shard, events) => {
+		ConsoleAndFileLogger.info(`Shard ${shard} resumed! Replayed ${events} events.`);
 	});
 
-new GitHubClient({ token, client }).login();
+const gitHubClient = new GitHubClient({ token, client }).login();
 
-client.login().catch(console.error);
+gitHubClient.on("message", (message) => {
+	ConsoleAndFileLogger.info(`Latency: ${Date.now() - message.createdTimestamp}ms`);
+});
+
+client.login().catch(ConsoleAndFileLogger.error);

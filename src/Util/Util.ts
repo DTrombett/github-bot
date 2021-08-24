@@ -1,4 +1,4 @@
-import type { Client } from "discord.js";
+import type { Client, Message } from "discord.js";
 
 export const enum IntentsFlags {
 	GUILDS,
@@ -37,3 +37,7 @@ export const enum ProjectData {
 	version = "0.0.1",
 	description = "A Discord bot that interacts with Github API.",
 }
+
+export type GitHubEvents = {
+	message: [message: Message];
+};

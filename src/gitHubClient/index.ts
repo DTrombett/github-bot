@@ -1,8 +1,8 @@
-import type { Client } from "discord.js";
+import type { Awaited, Client } from "discord.js";
 import { Constants } from "discord.js";
 import EventEmitter from "events";
 import { assert } from "superstruct";
-import type { GitHubClientOptions } from "../Util";
+import type { GitHubClientOptions, GitHubEvents } from "../Util";
 import { GithubAuthorData, ProjectData, sGitHubClientOptions } from "../Util";
 
 export const defaultRequestTimeout = 10_000;
@@ -46,11 +46,15 @@ export class GitHubClient extends EventEmitter {
 				username !== GithubAuthorData.username
 			)
 				return;
-			console.log(
-				// eslint-disable-next-line no-magic-numbers
-				`Ram usage: ${Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100}MB`
-			);
+			this.emit("message", message);
 		});
 		return this;
+	}
+
+	override on<E extends keyof GitHubEvents>(
+		event: E,
+		listener: (...args: GitHubEvents[E]) => Awaited<void>
+	): this {
+		return super.on(event, listener as (...args: any[]) => void);
 	}
 }
