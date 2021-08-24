@@ -1,6 +1,5 @@
 import type { ClientOptions } from "discord.js";
-import { Client, Options } from "discord.js";
-import { ActivityTypes } from "discord.js/typings/enums";
+import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
 import { assert } from "superstruct";
 import { GitHubClient } from "./gitHubClient";
@@ -26,7 +25,7 @@ const options: ClientOptions = {
 	},
 	invalidRequestWarningInterval,
 	partials: ["CHANNEL", "GUILD_MEMBER", "MESSAGE", "REACTION", "USER"],
-	presence: { activities: [{ name: "with GitHub", type: ActivityTypes.PLAYING }] },
+	presence: { activities: [{ name: "with GitHub", type: Constants.ActivityTypes.PLAYING }] },
 	restGlobalRateLimit,
 	restRequestTimeout,
 	restTimeOffset,
@@ -61,6 +60,7 @@ assert(options, sClientOptions);
 
 const client = new Client(options);
 const gitHubClient = new GitHubClient({ token, client });
+console.log(gitHubClient);
 
 client
 	.login()

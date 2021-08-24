@@ -1,19 +1,12 @@
 {
   "include": [
-    "src/"
+    "src/**/*"
   ],
+  "extends": "@tsconfig/node16/tsconfig.json",
+  "compileOnSave": true,
   "compilerOptions": {
-    "lib": [
-      "ES2021"
-    ],
-    "module": "commonJS",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
     "allowUnreachableCode": false,
     "alwaysStrict": true,
     "noFallthroughCasesInSwitch": true,
@@ -25,6 +18,11 @@
     "noUnusedParameters": true,
     "resolveJsonModule": true,
     "checkJs": true,
-    "allowJs": true
+    "allowJs": true,
+    "newLine": "lf",
+    "importHelpers": true,
+    "outDir": "dist",
+    "pretty": true,
+    "removeComments": true
   }
 }

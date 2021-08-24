@@ -1,3 +1,5 @@
+import type { Client } from "discord.js";
+
 export const enum IntentsFlags {
 	GUILDS,
 	GUILD_MEMBERS,
@@ -14,4 +16,24 @@ export const enum IntentsFlags {
 	DIRECT_MESSAGES,
 	DIRECT_MESSAGE_REACTIONS,
 	DIRECT_MESSAGE_TYPING,
+}
+
+export const enum GithubAuthorData {
+	username = "GitHub",
+	avatar = "df91181b3f1cf0ef1592fbe18e0962d7",
+}
+
+export type GitHubClientOptions = {
+	token: string;
+	client: Client;
+	timeZone?: string;
+	userAgent?: string;
+	requestTimeout?: number;
+};
+
+export const enum ProjectData {
+	author = "DTrombett",
+	name = "github-bot",
+	version = "0.0.1",
+	description = "A Discord bot that interacts with Github API.",
 }

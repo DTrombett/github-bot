@@ -28,8 +28,8 @@ import type {
 	WebSocketOptions,
 	WebSocketProperties,
 } from "discord.js";
-import { Intents } from "discord.js";
-import { ActivityTypes } from "discord.js/typings/enums";
+import { Client, Intents } from "discord.js";
+import type { ActivityTypes } from "discord.js/typings/enums";
 import type { Describe } from "superstruct";
 import {
 	array,
@@ -48,6 +48,7 @@ import {
 	string,
 	union,
 } from "superstruct";
+import type { GitHubClientOptions } from ".";
 
 const activityType = 5;
 const webhookType = 3;
@@ -94,8 +95,15 @@ export const sActivitiesOptions: Describe<ActivitiesOptions> = object({
 	name: optional(sString),
 	type: optional(
 		union([
-			enums(Object.keys(ActivityTypes) as (keyof typeof ActivityTypes)[]),
 			size(sNumber, 0, activityType),
+			enums([
+				"PLAYING",
+				"STREAMING",
+				"LISTENING",
+				"WATCHING",
+				"CUSTOM",
+				"COMPETING",
+			] as (keyof typeof ActivityTypes)[]),
 		])
 	),
 	url: optional(sString),
@@ -144,6 +152,7 @@ export const sIntentsResolvable = union([
 		"DIRECT_MESSAGE_REACTIONS",
 		"DIRECT_MESSAGE_TYPING",
 	] as const),
+	sNumber,
 	sSnowflake,
 ]) as Describe<ClientOptions["intents"]>;
 export const sClientOptions: Describe<ClientOptions> = object({
@@ -271,4 +280,10 @@ export const sAPIWebhook: Describe<APIWebhook> = object({
 	user: optional(sAPIUser),
 });
 
-export const sSnowflakeArray: Describe<Snowflake[]> = array(sSnowflake());
+export const sGitHubClientOptions: Describe<GitHubClientOptions> = object({
+	client: instance(Client) as unknown as Describe<Client>,
+	token: sString,
+	requestTimeout: optional(sNumber),
+	timeZone: optional(sString),
+	userAgent: optional(sString),
+});
