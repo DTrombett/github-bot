@@ -111,16 +111,14 @@ export const interactionCreate: (
 ) => Awaited<void> = (interaction) => {
 	if (!interaction.isCommand()) return;
 	const command = commands.get(interaction.commandName);
-	if (command) void command.run(interaction);
-	else {
-		interaction
-			.reply({
-				content: "Sorry, there was a problem loading this command!",
-				ephemeral: true,
-			})
-			.catch(console.error);
-		ConsoleAndFileLogger.error(`Received command ${interaction.commandName} not loaded`);
-	}
+	if (command) return void command.run(interaction);
+	interaction
+		.reply({
+			content: "Sorry, there was a problem loading this command!",
+			ephemeral: true,
+		})
+		.catch(console.error);
+	ConsoleAndFileLogger.error(`Received command ${interaction.commandName} not loaded`);
 };
 
 export const loadCommands = (client: GitHubClient): Promise<typeof commands> =>
