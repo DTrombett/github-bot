@@ -3,7 +3,8 @@ import { Constants } from "discord.js";
 import EventEmitter from "events";
 import { assert } from "superstruct";
 import type { GitHubClientOptions, GitHubEvents } from "../Util";
-import { GithubAuthorData, ProjectData, sGitHubClientOptions } from "../Util";
+import { ConsoleAndFileLogger, GithubAuthorData, ProjectData, sGitHubClientOptions } from "../Util";
+import RESTManager from "./rest/RESTManager";
 
 export const defaultRequestTimeout = 10_000;
 
@@ -15,10 +16,11 @@ export class GitHubClient extends EventEmitter {
 	discordClient: Client;
 	userAgent: string;
 	requestTimeout: number;
+	rest = new RESTManager(this);
 
 	constructor(options: GitHubClientOptions) {
-		assert(options, sGitHubClientOptions);
 		super();
+		assert(options, sGitHubClientOptions);
 
 		const {
 			token,
@@ -34,7 +36,7 @@ export class GitHubClient extends EventEmitter {
 		this.requestTimeout = requestTimeout;
 	}
 
-	login(): this {
+	async login(): Promise<unknown> {
 		this.discordClient.on(MESSAGE_CREATE, (message) => {
 			const {
 				author: { avatar, username },
@@ -48,7 +50,10 @@ export class GitHubClient extends EventEmitter {
 				return;
 			this.emit("message", message);
 		});
-		return this;
+		const date = Date.now();
+		const user = await this.rest.api.user.get();
+		ConsoleAndFileLogger.info(`Received client user in ${Date.now() - date}ms`);
+		return user;
 	}
 
 	override on<E extends keyof GitHubEvents>(

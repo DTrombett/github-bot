@@ -1,4 +1,5 @@
 import type { Client, Message } from "discord.js";
+import type { Json } from ".";
 
 export const enum IntentsFlags {
 	GUILDS,
@@ -40,4 +41,57 @@ export const enum ProjectData {
 
 export type GitHubEvents = {
 	message: [message: Message];
+	rateLimit: [rateLimitData: RateLimitData];
+};
+
+// eslint-disable-next-line @typescript-eslint/sort-type-union-intersection-members
+export type APIRouter = {
+	[K in symbol | "constructor" | "inspect" | "toString" | "valueOf"]: () => string;
+} & {
+	[key: string]: APIRouter;
+	(...routers: string[]): APIRouter;
+} & {
+		[K in Lowercase<RequestMethod>]: (
+			options?: Omit<RequestOptions, K extends "delete" | "get" | "head" ? "data" : never>
+		) => Promise<unknown>;
+	};
+
+export type AcceptType =
+	| ""
+	| "base64"
+	| "diff"
+	| "full"
+	| "html"
+	| "patch"
+	| "raw"
+	| "sha"
+	| "text";
+export type RequestOptions = {
+	headers?: Record<string, string>;
+	data?: Json;
+	query?: Record<string, string[] | string | null | undefined>;
+	requestTimeout?: number;
+	acceptType?: AcceptType;
+	json?: boolean;
+	onlyIf?: {
+		match?: string | null;
+		notMatch?: string | null;
+		modifiedSince?: string | null;
+		notModifiedSince?: string | null;
+	};
+	retry?: boolean;
+};
+export type RequestMethod = "DELETE" | "GET" | "HEAD" | "PATCH" | "POST" | "PUT";
+export enum ConditionalHeaders {
+	match = "If-Match",
+	notMatch = "If-None-Match",
+	modifiedSince = "If-Modified-Since",
+	notModifiedSince = "If-Unmodified-Since",
+}
+
+export type RateLimitData = {
+	timeout: number;
+	limit: number;
+	method: string;
+	path: string;
 };

@@ -19,7 +19,7 @@ const invalidatedExitCode = 502;
 const maxInvalidRequestsPerMinute = 1000;
 const invalidRequestExitCode = 508;
 const secondsIn10Minutes = 600;
-const millisecondsPerSecond = 1000;
+const milliseconds = 1000;
 
 const limitedManagerOptions = {
 	maxSize: 1,
@@ -97,8 +97,7 @@ const client = new Client(options)
 	})
 	.on(Events.INVALIDATED, () => process.exit(invalidatedExitCode))
 	.on(Events.INVALID_REQUEST_WARNING, ({ count, remainingTime }) => {
-		const requestsPerMinute =
-			count / (secondsIn10Minutes / (remainingTime / millisecondsPerSecond));
+		const requestsPerMinute = count / (secondsIn10Minutes / (remainingTime / milliseconds));
 		ConsoleAndFileLogger.info(`Registered ${requestsPerMinute} requests per minute.`);
 		if (requestsPerMinute >= maxInvalidRequestsPerMinute) process.exit(invalidRequestExitCode);
 	})
@@ -117,10 +116,15 @@ const client = new Client(options)
 		ConsoleAndFileLogger.info(`Shard ${shard} resumed! Replayed ${events} events.`);
 	});
 
-const gitHubClient = new GitHubClient({ token, client }).login();
+const gitHubClient = new GitHubClient({ token, client });
 
-gitHubClient.on("message", (message) => {
-	ConsoleAndFileLogger.info(`Latency: ${Date.now() - message.createdTimestamp}ms`);
-});
+gitHubClient
+	.on("message", (message) => {
+		ConsoleAndFileLogger.info(`Latency: ${Date.now() - message.createdTimestamp}ms`);
+	})
+	.on("rateLimit", console.error)
+	.login()
+	.then(console.log)
+	.catch(console.error);
 
 client.login().catch(ConsoleAndFileLogger.error);

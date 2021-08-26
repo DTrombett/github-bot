@@ -18,12 +18,14 @@ import { Client, Intents } from "discord.js";
 import type { ActivityTypes } from "discord.js/typings/enums";
 import type { Describe } from "superstruct";
 import {
+	any,
 	array,
 	boolean,
 	enums,
 	func,
 	instance,
 	literal,
+	nullable,
 	number,
 	object,
 	optional,
@@ -33,7 +35,15 @@ import {
 	string,
 	union,
 } from "superstruct";
-import type { GitHubClientOptions } from ".";
+import type {
+	AcceptType,
+	GitHubClientOptions,
+	Json,
+	RequestMethod,
+	RequestOptions,
+	RateLimitData as RateLimit,
+} from ".";
+import type { DetailedError, ErrorCode, ErrorData } from "../gitHubClient/rest/GitHubAPIError";
 
 const activityType = 5;
 // const webhookType = 3;
@@ -173,6 +183,85 @@ export const sGitHubClientOptions: Describe<GitHubClientOptions> = object({
 	requestTimeout: optional(sNumber),
 	timeZone: optional(sString),
 	userAgent: optional(sString),
+});
+
+export const sRequestMethod: Describe<RequestMethod> = enums([
+	"DELETE",
+	"GET",
+	"HEAD",
+	"PATCH",
+	"POST",
+	"PUT",
+]);
+export const sLowercaseRequestMethod: Describe<Lowercase<RequestMethod>> = enums([
+	"delete",
+	"get",
+	"head",
+	"patch",
+	"post",
+	"put",
+]);
+export const sAcceptType: Describe<AcceptType> = enums([
+	"",
+	"base64",
+	"diff",
+	"full",
+	"html",
+	"patch",
+	"raw",
+	"sha",
+	"text",
+]);
+export const sJson: Describe<Json> = nullable(
+	union([sString, sNumber, record(sString, any()), array(any()), sBoolean])
+);
+export const sRequestOptions: Describe<RequestOptions> = object({
+	acceptType: optional(sAcceptType),
+	data: optional(sJson),
+	headers: optional(record(sString, sString)),
+	json: optional(sBoolean),
+	onlyIf: optional(
+		object({
+			match: optional(nullable(sString)),
+			notMatch: optional(nullable(sString)),
+			modifiedSince: optional(nullable(sString)),
+			notModifiedSince: optional(nullable(sString)),
+		})
+	),
+	query: optional(record(sString, optional(nullable(union([sString, array(sString)]))))),
+	requestTimeout: optional(sNumber),
+});
+export const sDetailedError = union([
+	object({
+		message: sString,
+		documentation_url: optional(sString),
+		resource: sString,
+		field: sString,
+		code: literal("custom"),
+	}),
+	object({
+		resource: sString,
+		field: sString,
+		code: enums([
+			"already_exists",
+			"invalid",
+			"missing_field",
+			"missing",
+			"unprocessable",
+		] as ErrorCode[]),
+		documentation_url: optional(sString),
+	}),
+]) as unknown as Describe<DetailedError>;
+export const sErrorData: Describe<ErrorData> = object({
+	message: sString,
+	errors: optional(array(sDetailedError)),
+	documentation_url: optional(sString),
+});
+export const sRateLimitData: Describe<RateLimit> = object({
+	limit: sNumber,
+	method: sString,
+	path: sString,
+	timeout: sNumber,
 });
 
 // export const sWebhookType: Describe<WebhookType> = size(sNumber, 1, webhookType);
