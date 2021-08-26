@@ -3,6 +3,7 @@ import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
 import { assert } from "superstruct";
 import { inspect } from "util";
+import interactionCreate from "./commands/interactionCreate";
 import { GitHubClient } from "./gitHubClient";
 import {
 	ConsoleAndFileLogger,
@@ -69,7 +70,7 @@ const options: ClientOptions = {
 		MessageManager: 0,
 		ThreadMemberManager: 0,
 	}),
-	rejectOnRateLimit({ global, limit, method, path, route, timeout }) {
+	rejectOnRateLimit: ({ global, limit, method, path, route, timeout }) => {
 		ConsoleAndFileLogger.warn(
 			`Discord ${method} request queued on ${route} for ${
 				global ? "global" : "route"
@@ -99,6 +100,7 @@ process
 	});
 
 const client = new Client(options)
+	.on(Events.INTERACTION_CREATE, interactionCreate)
 	.on(Events.CLIENT_READY, (readyClient) => {
 		ConsoleAndFileLogger.info(
 			`Succesfully logged as ${client.user?.tag ?? "Unknown User"} in ${
@@ -143,15 +145,11 @@ const client = new Client(options)
 		ConsoleAndFileLogger.info(`Shard ${shard} resumed! Replayed ${events} events.`);
 	});
 
-const gitHubClient = new GitHubClient({ token, client });
+const gitHubClient = new GitHubClient({ token, client }).on("rateLimit", (data) => {
+	console.error(data);
+	FileLogger.error(inspect(data));
+});
 
-gitHubClient
-	.on("rateLimit", (data) => {
-		console.error(data);
-		FileLogger.error(inspect(data));
-	})
-	.login()
-	.then(console.log)
-	.catch(console.error);
+gitHubClient.login().then(console.log).catch(console.error);
 
 void client.login();
