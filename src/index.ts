@@ -78,6 +78,22 @@ const options: ClientOptions = {
 assert(token, sString);
 assert(options, sClientOptions);
 
+process
+	.on("exit", (code) => ConsoleAndFileLogger.error(`Process exited with code ${code}`))
+	.on("multipleResolves", (type) => {
+		ConsoleAndFileLogger.warn(
+			`A promise was ${type}${type === "reject" ? "e" : ""}d more than once!`
+		);
+	})
+	.on("uncaughtException", (err) => {
+		console.error(err);
+		FileLogger.error(err);
+	})
+	.on("warning", (warn) => {
+		console.warn(warn);
+		FileLogger.warn(inspect(warn));
+	});
+
 const client = new Client(options)
 	.on(Events.CLIENT_READY, (readyClient) => {
 		ConsoleAndFileLogger.info(
@@ -126,12 +142,12 @@ const client = new Client(options)
 const gitHubClient = new GitHubClient({ token, client });
 
 gitHubClient
-	.on("message", (message) => {
-		ConsoleAndFileLogger.info(`Latency: ${Date.now() - message.createdTimestamp}ms`);
+	.on("rateLimit", (data) => {
+		console.error(data);
+		FileLogger.error(inspect(data));
 	})
-	.on("rateLimit", console.error)
 	.login()
 	.then(console.log)
 	.catch(console.error);
 
-client.login().catch(ConsoleAndFileLogger.error);
+void client.login();

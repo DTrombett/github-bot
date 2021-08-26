@@ -3,7 +3,7 @@ import { Constants } from "discord.js";
 import EventEmitter from "events";
 import { assert } from "superstruct";
 import type { GitHubClientOptions, GitHubEvents } from "../Util";
-import { ConsoleAndFileLogger, GithubAuthorData, ProjectData, sGitHubClientOptions } from "../Util";
+import { GithubAuthorData, ProjectData, sGitHubClientOptions } from "../Util";
 import RESTManager from "./rest/RESTManager";
 
 export const defaultRequestTimeout = 10_000;
@@ -50,10 +50,7 @@ export class GitHubClient extends EventEmitter {
 				return;
 			this.emit("message", message);
 		});
-		const date = Date.now();
-		const user = await this.rest.api.user.get();
-		ConsoleAndFileLogger.info(`Received client user in ${Date.now() - date}ms`);
-		return user;
+		return this.rest.api.user.get();
 	}
 
 	override on<E extends keyof GitHubEvents>(
@@ -61,5 +58,9 @@ export class GitHubClient extends EventEmitter {
 		listener: (...args: GitHubEvents[E]) => Awaited<void>
 	): this {
 		return super.on(event, listener as (...args: any[]) => void);
+	}
+
+	override emit<E extends keyof GitHubEvents>(event: E, ...args: GitHubEvents[E]): boolean {
+		return super.emit(event, ...args);
 	}
 }

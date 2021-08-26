@@ -1,5 +1,6 @@
 import type { Client, Message } from "discord.js";
 import type { Json } from ".";
+import type RateLimitError from "../gitHubClient/rest/RateLimitError";
 
 export const enum IntentsFlags {
 	GUILDS,
@@ -41,7 +42,7 @@ export const enum ProjectData {
 
 export type GitHubEvents = {
 	message: [message: Message];
-	rateLimit: [rateLimitData: RateLimitData];
+	rateLimit: [rateLimitData: RateLimitError];
 };
 
 // eslint-disable-next-line @typescript-eslint/sort-type-union-intersection-members
