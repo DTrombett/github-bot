@@ -64,6 +64,8 @@ const options: ClientOptions = {
 		StageInstanceManager: 0,
 		UserManager: limitedManagerOptions,
 		VoiceStateManager: 0,
+		MessageManager: 0,
+		ThreadMemberManager: 0,
 	}),
 	rejectOnRateLimit({ global, limit, method, path, route, timeout }) {
 		ConsoleAndFileLogger.warn(
