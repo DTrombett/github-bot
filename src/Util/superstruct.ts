@@ -1,12 +1,28 @@
+import { SlashCommandBuilder } from "@discordjs/builders";
 import type { Snowflake } from "discord-api-types";
 import type {
 	ActivitiesOptions,
 	CacheFactory,
 	ClientOptions,
 	ClientPresenceStatus,
+	EmojiIdentifierResolvable,
+	EmojiResolvable,
 	HTTPOptions,
+	InteractionButtonOptions,
+	InteractionReplyOptions,
+	LinkButtonOptions,
+	MessageActionRowComponent,
+	MessageActionRowComponentOptions,
+	MessageActionRowComponentResolvable,
+	MessageActionRowOptions,
+	MessageButtonOptions,
+	MessageButtonStyle,
+	MessageButtonStyleResolvable,
+	MessageComponentType,
 	MessageMentionOptions,
 	MessageMentionTypes,
+	MessageSelectMenuOptions,
+	MessageSelectOptionData,
 	PartialTypes,
 	PresenceData,
 	PresenceStatusData,
@@ -14,8 +30,20 @@ import type {
 	WebSocketOptions,
 	WebSocketProperties,
 } from "discord.js";
-import { Client, Intents } from "discord.js";
-import type { ActivityTypes } from "discord.js/typings/enums";
+import {
+	Client,
+	GuildEmoji,
+	Intents,
+	MessageActionRow,
+	MessageButton,
+	MessageSelectMenu,
+	ReactionEmoji,
+} from "discord.js";
+import type {
+	ActivityTypes,
+	MessageButtonStyles,
+	MessageComponentTypes,
+} from "discord.js/typings/enums";
 import type { Describe } from "superstruct";
 import {
 	any,
@@ -37,15 +65,18 @@ import {
 } from "superstruct";
 import type {
 	AcceptType,
+	CommandOptions,
 	GitHubClientOptions,
 	Json,
+	RateLimitData as RateLimit,
 	RequestMethod,
 	RequestOptions,
-	RateLimitData as RateLimit,
 } from ".";
 import type { DetailedError, ErrorCode, ErrorData } from "../gitHubClient/rest/GitHubAPIError";
 
 const activityType = 5;
+const messageComponentType = 3;
+const messageButtonStyle = 5;
 // const webhookType = 3;
 // const channelType1 = 6;
 // const channelType2 = 10;
@@ -176,6 +207,102 @@ export const sClientOptions: Describe<ClientOptions> = object({
 	userAgentSuffix: optional(array(sString)),
 	ws: optional(sWebSocketOptions),
 });
+export const sMessageComponentTypes: Describe<MessageComponentTypes> = size(
+	sNumber,
+	1,
+	messageComponentType
+);
+export const sMessageComponentType: Describe<MessageComponentType> = enums([
+	"ACTION_ROW",
+	"BUTTON",
+	"SELECT_MENU",
+]);
+export const sMessageActionRowComponent = union([
+	instance(MessageButton),
+	instance(MessageSelectMenu),
+]) as unknown as Describe<MessageActionRowComponent>;
+export const sEmojiResolvable: Describe<EmojiResolvable> = union([
+	sSnowflake,
+	instance(GuildEmoji),
+	instance(ReactionEmoji),
+]);
+export const sEmojiIdentifierResolvable: Describe<EmojiIdentifierResolvable> = union([
+	sString,
+	sEmojiResolvable,
+]);
+export const sMessageButtonStyle: Describe<MessageButtonStyle> = enums([
+	"PRIMARY",
+	"SECONDARY",
+	"SUCCESS",
+	"DANGER",
+	"LINK",
+]);
+
+export const sMessageButtonStyles: Describe<MessageButtonStyles> = size(
+	sNumber,
+	1,
+	messageButtonStyle
+);
+export const sMessageButtonStyleResolvable: Describe<MessageButtonStyleResolvable> = union([
+	sMessageButtonStyle,
+	sMessageButtonStyles,
+]);
+export const sInteractionButtonOptions: Describe<InteractionButtonOptions> = object({
+	type: optional(union([sMessageComponentType, sMessageComponentTypes])),
+	customId: sString,
+	disabled: optional(sBoolean),
+	emoji: optional(sEmojiIdentifierResolvable),
+	label: optional(sString),
+	style: union([
+		enums(["PRIMARY", "SECONDARY", "SUCCESS", "DANGER"]),
+		size(sNumber, 1, messageButtonStyle - 1),
+	]) as Describe<InteractionButtonOptions["style"]>,
+	url: optional(sString),
+});
+export const sLinkButtonOptions: Describe<LinkButtonOptions> = object({
+	style: union([literal("LINK"), literal(messageButtonStyle)]),
+	url: sString,
+	disabled: optional(sBoolean),
+	emoji: optional(sEmojiIdentifierResolvable),
+	label: optional(sString),
+	type: optional(union([sMessageComponentType, sMessageComponentTypes])),
+});
+export const sMessageButtonOptions = union([
+	sInteractionButtonOptions,
+	sLinkButtonOptions,
+]) as unknown as Describe<MessageButtonOptions>;
+export const sMessageSelectOptionData: Describe<MessageSelectOptionData> = object({
+	default: optional(sBoolean),
+	description: optional(sString),
+	emoji: optional(sEmojiIdentifierResolvable),
+	label: sString,
+	value: sString,
+});
+export const sMessageSelectMenuOptions: Describe<MessageSelectMenuOptions> = object({
+	type: optional(union([sMessageComponentType, sMessageComponentTypes])),
+	customId: optional(sString),
+	disabled: optional(sBoolean),
+	maxValues: optional(sNumber),
+	minValues: optional(sNumber),
+	placeholder: optional(sString),
+	options: optional(array(sMessageSelectOptionData)),
+});
+export const sMessageActionRowComponentOptions = union([
+	sMessageButtonOptions,
+	sMessageSelectMenuOptions,
+]) as unknown as Describe<MessageActionRowComponentOptions>;
+export const sMessageActionRowComponentResolvable = union([
+	sMessageActionRowComponent,
+	sMessageActionRowComponentOptions,
+]) as unknown as Describe<MessageActionRowComponentResolvable>;
+export const sMessageActionRowOptions: Describe<MessageActionRowOptions> = object({
+	type: optional(union([sMessageComponentType, sMessageComponentTypes])),
+	components: array(sMessageActionRowComponentResolvable),
+});
+export const sInteractionReplyOptions: Describe<InteractionReplyOptions> = object({
+	allowedMentions: optional(sMessageMentionOptions),
+	components: optional(array(union([instance(MessageActionRow), sMessageActionRowOptions]))),
+});
 
 export const sGitHubClientOptions: Describe<GitHubClientOptions> = object({
 	client: instance(Client) as unknown as Describe<Client>,
@@ -262,6 +389,11 @@ export const sRateLimitData: Describe<RateLimit> = object({
 	method: sString,
 	path: sString,
 	timeout: sNumber,
+});
+
+export const sCommandOptions: Describe<CommandOptions> = object({
+	data: instance(SlashCommandBuilder) as unknown as Describe<SlashCommandBuilder>,
+	run: func() as unknown as Describe<CommandOptions["run"]>,
 });
 
 // export const sWebhookType: Describe<WebhookType> = size(sNumber, 1, webhookType);

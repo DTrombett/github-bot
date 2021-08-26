@@ -3,7 +3,6 @@ import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
 import { assert } from "superstruct";
 import { inspect } from "util";
-import interactionCreate from "./commands/interactionCreate";
 import { GitHubClient } from "./gitHubClient";
 import {
 	ConsoleAndFileLogger,
@@ -12,6 +11,7 @@ import {
 	ProjectData,
 	sClientOptions,
 	sString,
+	interactionCreate,
 } from "./Util";
 
 config();

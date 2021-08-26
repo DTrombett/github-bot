@@ -1,5 +1,12 @@
-import type { Client, Message } from "discord.js";
-import type { Json } from ".";
+import type { SlashCommandBuilder } from "@discordjs/builders";
+import type {
+	Awaited,
+	Client,
+	CommandInteraction,
+	InteractionReplyOptions,
+	Message,
+} from "discord.js";
+import type { Command, Json } from ".";
 import type RateLimitError from "../gitHubClient/rest/RateLimitError";
 
 export const enum IntentsFlags {
@@ -95,4 +102,12 @@ export type RateLimitData = {
 	limit: number;
 	method: string;
 	path: string;
+};
+
+export type CommandOptions = {
+	data: SlashCommandBuilder;
+	run: (
+		this: Command,
+		interaction: CommandInteraction
+	) => Awaited<InteractionReplyOptions | string | void>;
 };
