@@ -4,7 +4,14 @@ import { config } from "dotenv";
 import { assert } from "superstruct";
 import { inspect } from "util";
 import { GitHubClient } from "./gitHubClient";
-import { sClientOptions, sString, IntentsFlags, ConsoleAndFileLogger, FileLogger } from "./Util";
+import {
+	sClientOptions,
+	sString,
+	IntentsFlags,
+	ConsoleAndFileLogger,
+	FileLogger,
+	ProjectData,
+} from "./Util";
 
 config();
 
@@ -40,7 +47,7 @@ const options: ClientOptions = {
 	restRequestTimeout,
 	restTimeOffset,
 	shards: "auto",
-	userAgentSuffix: ["@DTrombett/github-bot@v1.0.0"],
+	userAgentSuffix: [`@${ProjectData.author}/${ProjectData.name}@v${ProjectData.version}`],
 	ws: {
 		large_threshold: 0,
 	},
