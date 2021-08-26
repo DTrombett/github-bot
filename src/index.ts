@@ -1,16 +1,16 @@
-import type { ClientOptions, GuildMember, User } from "discord.js";
+import type { ClientOptions, GuildMember } from "discord.js";
 import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
 import { assert } from "superstruct";
 import { inspect } from "util";
 import { GitHubClient } from "./gitHubClient";
 import {
-	sClientOptions,
-	sString,
-	IntentsFlags,
 	ConsoleAndFileLogger,
 	FileLogger,
+	IntentsFlags,
 	ProjectData,
+	sClientOptions,
+	sString,
 } from "./Util";
 
 config();
@@ -18,21 +18,18 @@ config();
 const { GITHUB_TOKEN: token } = process.env;
 const { Events, ActivityTypes } = Constants;
 
-const invalidRequestWarningInterval = 1000;
+// Numbers
+const invalidRequestWarningInterval = 1_000;
 const restGlobalRateLimit = 50;
 const restRequestTimeout = 10_000;
 const restTimeOffset = 1_000;
 const invalidatedExitCode = 502;
-const maxInvalidRequestsPerMinute = 1000;
+const maxInvalidRequestsPerMinute = 1_000;
 const invalidRequestExitCode = 508;
 const secondsIn10Minutes = 600;
-const milliseconds = 1000;
-
-const limitedManagerOptions = {
-	maxSize: 1,
-	sweepFilter: () => (userOrMember: GuildMember | User) =>
-		userOrMember.id !== userOrMember.client.user?.id,
-} as const;
+const milliseconds = 1_000;
+const seconds = 60;
+const sweepMinutes = 60;
 
 const options: ClientOptions = {
 	intents: (1 << IntentsFlags.GUILDS) | (1 << IntentsFlags.GUILD_MESSAGES),
@@ -56,13 +53,18 @@ const options: ClientOptions = {
 		BaseGuildEmojiManager: 0,
 		GuildBanManager: 0,
 		GuildInviteManager: 0,
-		GuildMemberManager: limitedManagerOptions,
+		GuildMemberManager: {
+			maxSize: 1,
+			sweepInterval: seconds * sweepMinutes,
+			sweepFilter: () => (member: GuildMember) => member.id !== member.client.user?.id,
+			keepOverLimit: (member) => member.id === member.client.user?.id,
+		} as const,
 		GuildStickerManager: 0,
 		PresenceManager: 0,
 		ReactionManager: 0,
 		ReactionUserManager: 0,
 		StageInstanceManager: 0,
-		UserManager: limitedManagerOptions,
+		UserManager: 1000,
 		VoiceStateManager: 0,
 		MessageManager: 0,
 		ThreadMemberManager: 0,
