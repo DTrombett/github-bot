@@ -5,8 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "npx eslint src && npx tsc --noEmit",
-    "lint": "npx eslint src --fix",
     "start": "npm run lint && npm run compile && node .",
+    "build": "npm run lint && npm run compile",
+    "lint": "npx eslint src --fix",
     "compile": "npx tsc"
   },
   "author": "DTrombett",
