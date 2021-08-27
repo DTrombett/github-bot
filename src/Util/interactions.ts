@@ -2,16 +2,12 @@ import type { Awaited, ClientEvents, ConstantsEvents } from "discord.js";
 import { Collection, CommandInteraction } from "discord.js";
 import { promises } from "fs";
 import { join } from "path";
-import { assert, instance, is, optional, union } from "superstruct";
+import { assert, instance, optional } from "superstruct";
+import { inspect } from "util";
 import type { CommandOptions } from ".";
-import {
-	ConsoleAndFileLogger,
-	sBoolean,
-	sCommandOptions,
-	sInteractionReplyOptions,
-	sString,
-} from ".";
+import { ConsoleAndFileLogger, sBoolean, sCommandOptions } from ".";
 import type { GitHubClient } from "../gitHubClient";
+import { FileLogger } from "./Console";
 
 export const commands = new Collection<string, Command>();
 
@@ -35,6 +31,11 @@ export class Command {
 	enabled = true;
 
 	/**
+	 * The name of this command
+	 */
+	readonly name: string;
+
+	/**
 	 * The GitHub client of this command
 	 */
 	readonly client: GitHubClient;
@@ -42,6 +43,7 @@ export class Command {
 	constructor(options: CommandOptions, client: GitHubClient) {
 		assert(options, sCommandOptions);
 		this.client = client;
+		this.name = options.data.name;
 		this.resolveProperties(options);
 	}
 
@@ -81,7 +83,7 @@ export class Command {
 	async reload(): Promise<this> {
 		const path = join(__dirname, "../commands", this.data.name);
 		delete require.cache[require.resolve(path)];
-		this.resolveProperties(((await import(path)) as { default: CommandOptions }).default);
+		this.resolveProperties(((await import(path)) as { command: CommandOptions }).command);
 		return this;
 	}
 
@@ -93,11 +95,11 @@ export class Command {
 				ephemeral: true,
 			});
 		const result = await this.callback(interaction);
-		if (is(result, union([sString, sInteractionReplyOptions])))
-			return void interaction[interaction.replied ? "editReply" : "reply"](result).catch(
-				console.error
-			);
-		return result;
+		if (typeof result === "string" || typeof result === "object")
+			return void interaction[interaction.replied || interaction.deferred ? "editReply" : "reply"](
+				result
+			).catch(console.error);
+		return void result;
 	}
 
 	private resolveProperties({ run, data }: CommandOptions) {
@@ -106,19 +108,25 @@ export class Command {
 	}
 }
 
+export const handleError = (interaction: CommandInteraction): Promise<void> => {
+	ConsoleAndFileLogger.error(`Received command ${interaction.commandName} not loaded`);
+	return interaction[interaction.replied || interaction.deferred ? "editReply" : "reply"]({
+		content: "Sorry, there was a problem loading this command!",
+		ephemeral: true,
+	}).then(() => undefined);
+};
+
 export const interactionCreate: (
 	...args: ClientEvents[ConstantsEvents["INTERACTION_CREATE"]]
-) => Awaited<void> = (interaction) => {
+) => Awaited<void> = async (interaction) => {
 	if (!interaction.isCommand()) return;
 	const command = commands.get(interaction.commandName);
-	if (command) return void command.run(interaction);
-	interaction
-		.reply({
-			content: "Sorry, there was a problem loading this command!",
-			ephemeral: true,
-		})
-		.catch(console.error);
-	ConsoleAndFileLogger.error(`Received command ${interaction.commandName} not loaded`);
+	try {
+		void ((await command?.run(interaction)) ?? handleError(interaction));
+	} catch (err: unknown) {
+		console.error(err);
+		FileLogger.error(inspect(err));
+	}
 };
 
 export const loadCommands = (client: GitHubClient): Promise<typeof commands> =>
@@ -130,13 +138,30 @@ export const loadCommands = (client: GitHubClient): Promise<typeof commands> =>
 					.filter((file): file is `${string}.js` => file.endsWith(".js"))
 					.map(
 						(file) =>
-							import(join(__dirname, "../commands", file)) as Promise<{ default: CommandOptions }>
+							import(join(__dirname, "../commands", file)) as Promise<{ command: CommandOptions }>
 					)
 			)
 		)
-		.then((files) =>
-			files.map((file) => commands.set(file.default.data.name, new Command(file.default, client)))
-		)
-		.then(() => commands);
+		.then((files) => {
+			const newCommands = files.map((file) => file.command);
+			for (const command of newCommands)
+				commands.set(command.data.name, new Command(command, client));
+			const { discordClient } = client;
+			if (!discordClient.isReady()) return commands;
+			const editedCommands = newCommands
+				.filter((command): command is CommandOptions & { reload: true } => command.reload === true)
+				.map((c) => c.data.toJSON());
+			if (editedCommands.length === 1)
+				// @ts-expect-error Bug?
+				return discordClient.application.commands.create(editedCommands[0]).then(() => commands);
+			if (editedCommands.length !== 0)
+				return (
+					discordClient.application.commands
+						// @ts-expect-error Bug?
+						.set(newCommands.map((command) => command.data.toJSON()))
+						.then(() => commands)
+				);
+			return commands;
+		});
 
 export default interactionCreate;

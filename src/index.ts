@@ -12,6 +12,7 @@ import {
 	sClientOptions,
 	sString,
 	interactionCreate,
+	loadCommands,
 } from "./Util";
 
 config();
@@ -101,13 +102,7 @@ process
 
 const client = new Client(options)
 	.on(Events.INTERACTION_CREATE, interactionCreate)
-	.on(Events.CLIENT_READY, (readyClient) => {
-		ConsoleAndFileLogger.info(
-			`Succesfully logged as ${client.user?.tag ?? "Unknown User"} in ${
-				readyClient.guilds.cache.size
-			} guilds.`
-		);
-	})
+
 	.on(Events.DEBUG, (message) => {
 		ConsoleAndFileLogger.info(message);
 	})
@@ -150,6 +145,21 @@ const gitHubClient = new GitHubClient({ token, client }).on("rateLimit", (data) 
 	FileLogger.error(inspect(data));
 });
 
-gitHubClient.login().then(console.log).catch(console.error);
+client.on(Events.CLIENT_READY, async (readyClient) => {
+	const results = await Promise.all([
+		loadCommands(gitHubClient),
+		readyClient.application.fetch(),
+	] as const).catch((err) => {
+		console.error(err);
+		FileLogger.error(inspect(err));
+		return undefined;
+	});
+	ConsoleAndFileLogger.info(
+		`Succesfully logged as ${readyClient.user.tag} in ${
+			readyClient.guilds.cache.size
+		} guilds with ${results?.[0].size ?? 0} commands.`
+	);
+});
 
+void gitHubClient.login();
 void client.login();

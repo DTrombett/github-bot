@@ -1,4 +1,4 @@
-import type { SlashCommandBuilder } from "@discordjs/builders";
+import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "@discordjs/builders";
 import type {
 	Awaited,
 	Client,
@@ -105,9 +105,13 @@ export type RateLimitData = {
 };
 
 export type CommandOptions = {
-	data: SlashCommandBuilder;
+	data:
+		| Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">
+		| SlashCommandBuilder
+		| SlashCommandSubcommandsOnlyBuilder;
 	run: (
 		this: Command,
 		interaction: CommandInteraction
 	) => Awaited<InteractionReplyOptions | string | void>;
+	reload?: boolean;
 };

@@ -392,8 +392,9 @@ export const sRateLimitData: Describe<RateLimit> = object({
 });
 
 export const sCommandOptions: Describe<CommandOptions> = object({
-	data: instance(SlashCommandBuilder) as unknown as Describe<SlashCommandBuilder>,
+	data: instance(SlashCommandBuilder) as unknown as Describe<CommandOptions["data"]>,
 	run: func() as unknown as Describe<CommandOptions["run"]>,
+	reload: optional(sBoolean),
 });
 
 // export const sWebhookType: Describe<WebhookType> = size(sNumber, 1, webhookType);
