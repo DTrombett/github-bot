@@ -1,11 +1,5 @@
 import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "@discordjs/builders";
-import type {
-	Awaited,
-	Client,
-	CommandInteraction,
-	InteractionReplyOptions,
-	Message,
-} from "discord.js";
+import type { Awaited, Client, CommandInteraction, InteractionReplyOptions } from "discord.js";
 import type { Command, Json } from ".";
 import type RateLimitError from "../gitHubClient/rest/RateLimitError";
 
@@ -48,7 +42,6 @@ export const enum ProjectData {
 }
 
 export type GitHubEvents = {
-	message: [message: Message];
 	rateLimit: [rateLimitData: RateLimitError];
 };
 

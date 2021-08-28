@@ -1,4 +1,4 @@
-import type { ClientOptions, GuildMember } from "discord.js";
+import type { ClientOptions, GuildMember, Snowflake } from "discord.js";
 import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
 import { assert } from "superstruct";
@@ -33,8 +33,11 @@ const milliseconds = 1_000;
 const seconds = 60;
 const sweepMinutes = 60;
 
+const keepOverLimit = (user: { id: Snowflake; client: Client }): boolean =>
+	user.id === user.client.user?.id;
+
 const options: ClientOptions = {
-	intents: (1 << IntentsFlags.GUILDS) | (1 << IntentsFlags.GUILD_MESSAGES),
+	intents: 1 << IntentsFlags.GUILDS,
 	allowedMentions: { parse: ["everyone"] },
 	failIfNotExists: false,
 	http: {
@@ -59,14 +62,14 @@ const options: ClientOptions = {
 			maxSize: 1,
 			sweepInterval: seconds * sweepMinutes,
 			sweepFilter: () => (member: GuildMember) => member.id !== member.client.user?.id,
-			keepOverLimit: (member) => member.id === member.client.user?.id,
+			keepOverLimit,
 		} as const,
 		GuildStickerManager: 0,
 		PresenceManager: 0,
 		ReactionManager: 0,
 		ReactionUserManager: 0,
 		StageInstanceManager: 0,
-		UserManager: 1000,
+		UserManager: { maxSize: 1_000, sweepInterval: seconds * sweepMinutes, keepOverLimit },
 		VoiceStateManager: 0,
 		MessageManager: 0,
 		ThreadMemberManager: 0,
@@ -102,7 +105,6 @@ process
 
 const client = new Client(options)
 	.on(Events.INTERACTION_CREATE, interactionCreate)
-
 	.on(Events.DEBUG, (message) => {
 		ConsoleAndFileLogger.info(message);
 	})

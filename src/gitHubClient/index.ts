@@ -1,14 +1,11 @@
 import type { Awaited, Client } from "discord.js";
-import { Constants } from "discord.js";
 import EventEmitter from "events";
 import { assert } from "superstruct";
 import type { GitHubClientOptions, GitHubEvents } from "../Util";
-import { GithubAuthorData, ProjectData, sGitHubClientOptions } from "../Util";
+import { ProjectData, sGitHubClientOptions } from "../Util";
 import RESTManager from "./rest/RESTManager";
 
 export const defaultRequestTimeout = 10_000;
-
-const { MESSAGE_CREATE } = Constants.Events;
 
 export class GitHubClient extends EventEmitter {
 	token: string;
@@ -37,19 +34,6 @@ export class GitHubClient extends EventEmitter {
 	}
 
 	async login(): Promise<unknown> {
-		this.discordClient.on(MESSAGE_CREATE, (message) => {
-			const {
-				author: { avatar, username },
-				embeds,
-			} = message;
-			if (
-				avatar !== GithubAuthorData.avatar ||
-				embeds.length === 0 ||
-				username !== GithubAuthorData.username
-			)
-				return;
-			this.emit("message", message);
-		});
 		return this.rest.api.user.get();
 	}
 
