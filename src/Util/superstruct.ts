@@ -88,7 +88,7 @@ export const sString: Describe<string> = string();
 export const sNumber: Describe<number> = number();
 export const sBoolean = boolean();
 
-export const sSnowflake: Describe<Snowflake> = pattern(sString, /\d{16,19}/gu);
+export const sSnowflake: Describe<Snowflake> = pattern(sString, /^\d{17,19}$/);
 export const sMessageMentionTypes: Describe<MessageMentionTypes> = enums([
 	"roles",
 	"users",

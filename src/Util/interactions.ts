@@ -87,6 +87,10 @@ export class Command {
 		return this;
 	}
 
+	/**
+	 * Execute this command.
+	 * @param interaction - The interaction received
+	 */
 	async run(interaction: CommandInteraction): Promise<void> {
 		assert(interaction, instance(CommandInteraction));
 		if (!this.enabled)
@@ -94,12 +98,17 @@ export class Command {
 				content: "Sorry, this command is temporarily disabled!",
 				ephemeral: true,
 			});
-		const result = await this.callback(interaction);
-		if (typeof result === "string" || typeof result === "object")
-			return void interaction[interaction.replied || interaction.deferred ? "editReply" : "reply"](
-				result
-			).catch(console.error);
-		return void result;
+		try {
+			const result = await this.callback(interaction);
+			if (typeof result === "string" || typeof result === "object")
+				return void interaction[
+					interaction.replied || interaction.deferred ? "editReply" : "reply"
+				](result).catch(console.error);
+		} catch (err) {
+			console.error(err);
+			FileLogger.error(inspect(err));
+		}
+		return undefined;
 	}
 
 	private resolveProperties({ run, data }: CommandOptions) {
@@ -121,12 +130,10 @@ export const interactionCreate: (
 ) => Awaited<void> = async (interaction) => {
 	if (!interaction.isCommand()) return;
 	const command = commands.get(interaction.commandName);
-	try {
-		void ((await command?.run(interaction)) ?? handleError(interaction));
-	} catch (err: unknown) {
+	await (command?.run(interaction).catch((err) => {
 		console.error(err);
 		FileLogger.error(inspect(err));
-	}
+	}) ?? handleError(interaction));
 };
 
 export const loadCommands = (client: GitHubClient): Promise<typeof commands> =>
@@ -143,24 +150,8 @@ export const loadCommands = (client: GitHubClient): Promise<typeof commands> =>
 			)
 		)
 		.then((files) => {
-			const newCommands = files.map((file) => file.command);
-			for (const command of newCommands)
+			for (const command of files.map((file) => file.command))
 				commands.set(command.data.name, new Command(command, client));
-			const { discordClient } = client;
-			if (!discordClient.isReady()) return commands;
-			const editedCommands = newCommands
-				.filter((command): command is CommandOptions & { reload: true } => command.reload === true)
-				.map((c) => c.data.toJSON());
-			if (editedCommands.length === 1)
-				// @ts-expect-error Bug?
-				return discordClient.application.commands.create(editedCommands[0]).then(() => commands);
-			if (editedCommands.length !== 0)
-				return (
-					discordClient.application.commands
-						// @ts-expect-error Bug?
-						.set(newCommands.map((command) => command.data.toJSON()))
-						.then(() => commands)
-				);
 			return commands;
 		});
 

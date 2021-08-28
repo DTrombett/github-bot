@@ -42,9 +42,16 @@ export const command: CommandOptions = {
 				content: "You're not allowed to run this command!",
 				ephemeral: true,
 			});
-		const result = (await eval(
-			`(async function(){${interaction.options.getString("input", true)}}).bind(this)()`
-		)) as unknown;
+		let result: unknown;
+
+		try {
+			(await eval(
+				`(async function(){${interaction.options.getString("input", true)}}).bind(this)()`
+			)) as unknown;
+		} catch (err) {
+			result = err;
+		}
+
 		console.log(result);
 		return {
 			embeds: inspect(result, {

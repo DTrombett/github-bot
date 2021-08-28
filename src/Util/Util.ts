@@ -113,5 +113,4 @@ export type CommandOptions = {
 		this: Command,
 		interaction: CommandInteraction
 	) => Awaited<InteractionReplyOptions | string | void>;
-	reload?: boolean;
 };
