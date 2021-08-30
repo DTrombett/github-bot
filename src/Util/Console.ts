@@ -17,7 +17,6 @@ export const ConsoleAndFileLogger = createLogger({
 			`[${logInfo.level.toUpperCase()}] - ${
 				logInfo.message
 			} (${new Date().toLocaleString()} - RAM: ${
-				// eslint-disable-next-line no-magic-numbers
 				Math.round((process.memoryUsage().heapUsed * 25) / 262144) / 100
 			}MB)`
 	),

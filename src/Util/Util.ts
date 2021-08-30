@@ -1,5 +1,6 @@
 import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "@discordjs/builders";
 import type { Awaited, Client, CommandInteraction, InteractionReplyOptions } from "discord.js";
+import type { Headers } from "node-fetch";
 import type { Command, Json } from ".";
 import type RateLimitError from "../gitHubClient/rest/RateLimitError";
 
@@ -52,9 +53,10 @@ export type APIRouter = {
 	[key: string]: APIRouter;
 	(...routers: string[]): APIRouter;
 } & {
-		[K in Lowercase<RequestMethod>]: (
-			options?: Omit<RequestOptions, K extends "delete" | "get" | "head" ? "data" : never>
-		) => Promise<unknown>;
+		[K in Lowercase<RequestMethod>]: <T = unknown, N extends null = never>(
+			options?: Omit<RequestOptions, K extends "delete" | "get" | "head" ? "data" : never> &
+				(N extends null ? { etag: string | null } : { etag?: never })
+		) => Promise<N | ResponseData<T>>;
 	};
 
 export type AcceptType =
@@ -74,21 +76,10 @@ export type RequestOptions = {
 	requestTimeout?: number;
 	acceptType?: AcceptType;
 	json?: boolean;
-	onlyIf?: {
-		match?: string | null;
-		notMatch?: string | null;
-		modifiedSince?: string | null;
-		notModifiedSince?: string | null;
-	};
+	etag?: string | null;
 	retry?: boolean;
 };
 export type RequestMethod = "DELETE" | "GET" | "HEAD" | "PATCH" | "POST" | "PUT";
-export enum ConditionalHeaders {
-	match = "If-Match",
-	notMatch = "If-None-Match",
-	modifiedSince = "If-Modified-Since",
-	notModifiedSince = "If-Unmodified-Since",
-}
 
 export type RateLimitData = {
 	timeout: number;
@@ -106,4 +97,71 @@ export type CommandOptions = {
 		this: Command,
 		interaction: CommandInteraction
 	) => Awaited<InteractionReplyOptions | string | void>;
+	ownerOnly?: boolean;
+};
+
+export type ResponseData<T = unknown> = {
+	data: T;
+	headers: Headers;
+};
+
+export enum UserType {
+	"User" = 1,
+	"Organization" = 2,
+}
+
+export type UserPlan = {
+	name: string;
+	space: number;
+	privateRepositoryCount: number;
+	collaboratorsCount: number;
+};
+
+export type ClientUserData = UserData & {
+	private_gists: number;
+	total_private_repos: number;
+	owned_private_repos: number;
+	disk_usage: number;
+	collaborators: number;
+	two_factor_authentication: boolean;
+	plan: {
+		name: string;
+		space: number;
+		private_repos: number;
+		collaborators: number;
+	};
+};
+export type UserData = {
+	avatar_url: `https://avatars.githubusercontent.com/u/${string}?v=4`;
+	bio?: string | null;
+	blog?: string;
+	company?: string | null;
+	created_at?: string;
+	email?: string | null;
+	events_url?: `https://api.github.com/users/${string}/events{/privacy}`;
+	followers_url?: `https://api.github.com/users/${string}/followers`;
+	followers?: number;
+	following_url?: `https://api.github.com/users/${string}/following{/other_user}`;
+	following?: number;
+	gists_url?: `https://api.github.com/users/${string}/gists{/gist_id}`;
+	gravatar_id: string;
+	hireable?: boolean;
+	html_url: `https://github.com/users/${string}`;
+	id: number;
+	location?: string | null;
+	login: string;
+	name?: string | null;
+	node_id: string;
+	organizations_url?: `https://api.github.com/users/${string}/orgs`;
+	public_gists?: number;
+	public_repos?: number;
+	received_events_url?: `https://api.github.com/users/${string}/received_events`;
+	repos_url?: `https://api.github.com/users/${string}/repos`;
+	site_admin?: boolean;
+	starred_url?: `https://api.github.com/users/${string}/starred{/owner}{/repo}`;
+	subscriptions_url?: `https://api.github.com/users/${string}/subscriptions`;
+	twitter_username?: string | null;
+	type: "Organization" | "User";
+	updated_at?: string;
+	url?: `https://api.github.com/users/${string}`;
 };

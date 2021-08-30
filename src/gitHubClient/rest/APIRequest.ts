@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 import { assert, instance, is } from "superstruct";
 import { URLSearchParams } from "url";
 import type { RequestMethod, RequestOptions } from "../../Util";
-import { ConditionalHeaders, sRequestMethod, sRequestOptions, sString } from "../../Util";
+import { sRequestMethod, sRequestOptions, sString } from "../../Util";
 import RESTManager from "./RESTManager";
 
 const agent = new https.Agent({ keepAlive: true });
@@ -32,14 +32,14 @@ export class APIRequest {
 			query = {},
 			requestTimeout = defaultRequestTimeout,
 			json = !["raw", "diff", "sha", "patch", "html", "base64"].includes(acceptType),
-			onlyIf = {},
+			etag = null,
 			retry = true,
 		}: RequestOptions = {}
 	) {
 		assert(rest, instance(RESTManager));
 		assert(method, sRequestMethod);
 		assert(path, sString);
-		assert({ acceptType, data, headers, query, requestTimeout, json, onlyIf }, sRequestOptions);
+		assert({ acceptType, data, headers, query, requestTimeout, json, etag }, sRequestOptions);
 		this.rest = rest;
 		this.path = path;
 		if (["diff", "patch", "sha", "base64"].includes(acceptType) && json)
@@ -48,12 +48,6 @@ export class APIRequest {
 		headers.Accept = `application/vnd.github.v3${acceptType && `.${acceptType}`}${
 			json ? "+json" : ""
 		}`;
-		for (const condition in onlyIf)
-			if (Object.prototype.hasOwnProperty.call(onlyIf, condition)) {
-				const element = onlyIf[condition as keyof typeof onlyIf];
-				if (element != null)
-					headers[ConditionalHeaders[condition as keyof typeof onlyIf]] = element;
-			}
 		this.options = {
 			acceptType,
 			data,
@@ -61,7 +55,7 @@ export class APIRequest {
 			query: { ...query },
 			requestTimeout,
 			json,
-			onlyIf: { ...onlyIf },
+			etag,
 			retry,
 		};
 		const queryString = new URLSearchParams(
@@ -75,14 +69,16 @@ export class APIRequest {
 	}
 
 	make(): Promise<Response> {
+		const controller = new AbortController();
 		const headers: Record<string, string> = { ...baseHeaders, ...this.options.headers };
 		const body = this.options.data != null ? JSON.stringify(this.options.data) : undefined;
 		if (this.options.data != null) headers["Content-Type"] = "application/json";
+		if (this.options.etag != null) headers["If-None-Match"] = `"${this.options.etag}"`;
 		if (is(process.env.GITHUB_TOKEN, sString))
 			headers.Authorization = `Basic ${Buffer.from(
 				`DTrombett:${process.env.GITHUB_TOKEN}`
 			).toString("base64")}`;
-		const controller = new AbortController();
+
 		const timeout = setTimeout(() => {
 			controller.abort();
 		}, this.options.requestTimeout).unref();

@@ -1,14 +1,15 @@
 import { AsyncQueue } from "@sapphire/async-queue";
 import type { FetchError, Response } from "node-fetch";
-import type { ErrorData } from "./GitHubAPIError";
-import DiscordAPIError from "./GitHubAPIError";
-import HTTPError from "./HTTPError";
-import RESTManager from "./RESTManager";
-import { setTimeout } from "timers/promises";
-import APIRequest from "./APIRequest";
-import { RateLimitError } from "./RateLimitError";
 import { assert, instance } from "superstruct";
+import { setTimeout } from "timers/promises";
+import type { Json, ResponseData } from "../../Util";
 import { sNumber } from "../../Util";
+import APIRequest from "./APIRequest";
+import type { ErrorData } from "./GitHubAPIError";
+import GitHubAPIError from "./GitHubAPIError";
+import HTTPError from "./HTTPError";
+import { RateLimitError } from "./RateLimitError";
+import RESTManager from "./RESTManager";
 
 export const errorCodes = {
 	badRequest: 400,
@@ -19,10 +20,12 @@ export const errorCodes = {
 
 const milliseconds = 1_000;
 
-export const parseResponse = (res: Response): Promise<unknown> =>
-	res.headers.get("Content-Type")?.startsWith("application/json") === true
+export const parseResponse = async (res: Response): Promise<ResponseData> => ({
+	data: (await (res.headers.get("content-type")?.startsWith("application/json") === true
 		? res.json()
-		: res.buffer();
+		: res.buffer())) as Record<string, Json>,
+	headers: res.headers,
+});
 export const calculateReset = (reset: string): number =>
 	new Date(Number(reset) * milliseconds).getTime();
 
@@ -64,7 +67,7 @@ export class RequestHandler {
 		};
 	}
 
-	async push(request: APIRequest): Promise<unknown> {
+	async push(request: APIRequest): Promise<ResponseData | null> {
 		await this.queue.wait().catch(console.error);
 		return this.execute(request).finally(() => {
 			this.queue.shift();
@@ -88,8 +91,7 @@ export class RequestHandler {
 		return setTimeout(ms, (this.manager.globalDelay = null));
 	}
 
-	// eslint-disable-next-line complexity
-	async execute(request: APIRequest): Promise<unknown> {
+	async execute(request: APIRequest): Promise<ResponseData | null> {
 		assert(request, instance(APIRequest));
 		if (this.limited)
 			this.manager.globalDelay ??= this.globalDelayFor(
@@ -102,9 +104,9 @@ export class RequestHandler {
 		}
 		this.manager.globalRemaining--;
 		const res = await request.make().catch(RequestHandler.onFetchError(request));
-		const limit = res.headers.get("X-RateLimit-Limit");
-		const remaining = res.headers.get("X-RateLimit-Remaining");
-		const reset = res.headers.get("X-RateLimit-Reset");
+		const limit = res.headers.get("x-ratelimit-limit");
+		const remaining = res.headers.get("x-ratelimit-remaining");
+		const reset = res.headers.get("x-ratelimit-reset");
 
 		this.limit = limit != null ? Number(limit) : Infinity;
 		this.remaining = remaining != null ? Number(remaining) : 1;
@@ -117,23 +119,19 @@ export class RequestHandler {
 			this.manager.globalReset = Date.now() + retryAfter;
 		}
 		if (res.ok) return parseResponse(res);
-		if (res.status >= errorCodes.badRequest && res.status < errorCodes.serverError) {
-			if (res.status === errorCodes.rateLimit) {
-				const limit = this.manager.globalLimit;
-				const timeout = this.manager.globalReset + milliseconds - Date.now();
-
-				RequestHandler.onRateLimit(request, limit, timeout);
-			}
-
-			const data = await parseResponse(res).catch(RequestHandler.onParseError(request));
-
-			throw new DiscordAPIError(data as ErrorData, res.status, request);
-		}
+		if (res.status === 304) return null;
 		if (res.status >= errorCodes.serverError && res.status < errorCodes.unknown) {
 			if (request.options.retry) return this.execute(request);
 			throw new HTTPError(res.statusText, res.constructor.name, res.status, request);
 		}
-		return null;
+		if (res.status === errorCodes.rateLimit) {
+			const limit = this.manager.globalLimit;
+			const timeout = this.manager.globalReset + milliseconds - Date.now();
+
+			RequestHandler.onRateLimit(request, limit, timeout);
+		}
+		const response = await parseResponse(res).catch(RequestHandler.onParseError(request));
+		throw new GitHubAPIError(response.data as ErrorData, res.status, request);
 	}
 }
 

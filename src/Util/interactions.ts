@@ -3,11 +3,10 @@ import { Collection, CommandInteraction } from "discord.js";
 import { promises } from "fs";
 import { join } from "path";
 import { assert, instance, optional } from "superstruct";
-import { inspect } from "util";
 import type { CommandOptions } from ".";
 import { ConsoleAndFileLogger, sBoolean, sCommandOptions } from ".";
 import type { GitHubClient } from "../gitHubClient";
-import { FileLogger } from "./Console";
+import { logError } from "./error";
 
 export const commands = new Collection<string, Command>();
 
@@ -29,6 +28,11 @@ export class Command {
 	 * If this command is enabled or not
 	 */
 	enabled = true;
+
+	/**
+	 * If this command is private
+	 */
+	ownerOnly!: boolean;
 
 	/**
 	 * The name of this command
@@ -103,17 +107,17 @@ export class Command {
 			if (typeof result === "string" || typeof result === "object")
 				return void interaction[
 					interaction.replied || interaction.deferred ? "editReply" : "reply"
-				](result).catch(console.error);
+				](result).catch(logError);
 		} catch (err) {
-			console.error(err);
-			FileLogger.error(inspect(err));
+			logError(err);
 		}
 		return undefined;
 	}
 
-	private resolveProperties({ run, data }: CommandOptions) {
+	private resolveProperties({ run, data, ownerOnly }: CommandOptions) {
 		this.callback = run.bind(this);
 		this.data = data;
+		this.ownerOnly = ownerOnly ?? false;
 	}
 }
 
@@ -130,10 +134,7 @@ export const interactionCreate: (
 ) => Awaited<void> = async (interaction) => {
 	if (!interaction.isCommand()) return;
 	const command = commands.get(interaction.commandName);
-	await (command?.run(interaction).catch((err) => {
-		console.error(err);
-		FileLogger.error(inspect(err));
-	}) ?? handleError(interaction));
+	await (command?.run(interaction).catch(logError) ?? handleError(interaction));
 };
 
 export const loadCommands = (client: GitHubClient): Promise<typeof commands> =>

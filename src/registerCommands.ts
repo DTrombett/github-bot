@@ -4,8 +4,7 @@ import { Routes } from "discord-api-types/v9";
 import { config } from "dotenv";
 import { promises } from "fs";
 import { join } from "path";
-import { assert, instance, type } from "superstruct";
-import { sSnowflake, sString } from "./superstruct";
+import { assert, boolean, instance, optional, string, type } from "superstruct";
 
 console.time("Register slash commands");
 
@@ -18,34 +17,48 @@ const {
 	GLOBAL_COMMANDS: registerGlobal,
 } = process.env;
 
-assert(applicationId, sSnowflake);
-assert(guildId, sSnowflake);
-assert(token, sString);
+assert(applicationId, string());
+assert(guildId, string());
+assert(token, string());
 
 promises
-	.readdir(join(__dirname, "../commands/"))
+	.readdir(join(__dirname, "commands"))
 	.then((files) =>
 		Promise.all(
 			files
 				.filter((file): file is `${string}.js` => file.endsWith(".js"))
 				.map(async (file) => {
-					const fileData = (await import(join(__dirname, "../commands", file))) as unknown;
-					assert(fileData, type({ command: type({ data: instance(SlashCommandBuilder) }) }));
-					return fileData.command.data.toJSON();
+					const fileData = (await import(join(__dirname, "commands", file))) as unknown;
+					assert(
+						fileData,
+						type({
+							command: type({
+								data: instance(SlashCommandBuilder),
+								ownerOnly: optional(boolean()),
+							}),
+						})
+					);
+					return fileData;
 				})
 		)
 	)
-	.then((body) =>
+	.then((files) =>
 		new REST({ version: "9" })
 			.setToken(token)
 			.put(
 				registerGlobal === "true"
 					? Routes.applicationCommands(applicationId)
 					: Routes.applicationGuildCommands(applicationId, guildId),
-				{ body }
+				{
+					body: (registerGlobal === "true"
+						? files.filter((cmd) => cmd.command.ownerOnly !== true)
+						: files
+					).map((file) => file.command.data.toJSON()),
+				}
 			)
 	)
-	.then(() => {
+	.then((res) => {
+		console.log(res);
 		console.timeEnd("Register slash commands");
 	})
 	.catch(console.error);

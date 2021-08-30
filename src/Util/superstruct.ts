@@ -345,18 +345,12 @@ export const sJson: Describe<Json> = nullable(
 export const sRequestOptions: Describe<RequestOptions> = object({
 	acceptType: optional(sAcceptType),
 	data: optional(sJson),
+	etag: optional(nullable(sString)),
 	headers: optional(record(sString, sString)),
 	json: optional(sBoolean),
-	onlyIf: optional(
-		object({
-			match: optional(nullable(sString)),
-			notMatch: optional(nullable(sString)),
-			modifiedSince: optional(nullable(sString)),
-			notModifiedSince: optional(nullable(sString)),
-		})
-	),
 	query: optional(record(sString, optional(nullable(union([sString, array(sString)]))))),
 	requestTimeout: optional(sNumber),
+	retry: optional(sBoolean),
 });
 export const sDetailedError = union([
 	object({
@@ -394,7 +388,7 @@ export const sRateLimitData: Describe<RateLimit> = object({
 export const sCommandOptions: Describe<CommandOptions> = object({
 	data: instance(SlashCommandBuilder) as unknown as Describe<CommandOptions["data"]>,
 	run: func() as unknown as Describe<CommandOptions["run"]>,
-	reload: optional(sBoolean),
+	ownerOnly: optional(sBoolean),
 });
 
 // export const sWebhookType: Describe<WebhookType> = size(sNumber, 1, webhookType);
@@ -461,7 +455,6 @@ export const sCommandOptions: Describe<CommandOptions> = object({
 // 	welcome_screen: optional(sAPIGuildWelcomeScreen),
 // });
 // export const sUserFlags = enums([
-// 	// eslint-disable-next-line no-magic-numbers
 // 	1, 2, 4, 8, 64, 128, 256, 512, 1024, 16384, 65536, 131072, 262144,
 // ]) as unknown as Describe<UserFlags>;
 // export const sUserPremiumType: Describe<UserPremiumType> = size(sNumber, 0, userPremiumType);

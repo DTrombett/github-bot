@@ -1,9 +1,11 @@
 import type { Awaited, Client } from "discord.js";
 import EventEmitter from "events";
 import { assert } from "superstruct";
-import type { GitHubClientOptions, GitHubEvents } from "../Util";
+import type { APIRouter, ClientUserData, GitHubClientOptions, GitHubEvents } from "../Util";
 import { ProjectData, sGitHubClientOptions } from "../Util";
+import { UserManager } from "./managers/UserManager";
 import RESTManager from "./rest/RESTManager";
+import { ClientUser } from "./structures/ClientUser";
 
 export const defaultRequestTimeout = 10_000;
 
@@ -14,6 +16,8 @@ export class GitHubClient extends EventEmitter {
 	userAgent: string;
 	requestTimeout: number;
 	rest = new RESTManager(this);
+	user: ClientUser | null = null;
+	users = new UserManager(this);
 
 	constructor(options: GitHubClientOptions) {
 		super();
@@ -33,8 +37,15 @@ export class GitHubClient extends EventEmitter {
 		this.requestTimeout = requestTimeout;
 	}
 
-	async login(): Promise<unknown> {
-		return this.rest.api.user.get();
+	get api(): APIRouter {
+		return this.rest.api;
+	}
+
+	async login(): Promise<ClientUser> {
+		return this.rest.api.user.get<ClientUserData>().then((response) => {
+			this.users.cache.set(response.data.login, (this.user = new ClientUser(this, response)));
+			return this.user;
+		});
 	}
 
 	override on<E extends keyof GitHubEvents>(

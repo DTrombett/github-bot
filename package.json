@@ -9,7 +9,7 @@
     "build": "npm run lint && npm run compile",
     "lint": "npx eslint src --fix",
     "compile": "npx tsc",
-    "commands": "node dist/Util/registerCommands",
+    "commands": "node ./dist/registerCommands.js",
     "login": "node ."
   },
   "author": "DTrombett",

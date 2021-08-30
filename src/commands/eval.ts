@@ -1,10 +1,4 @@
-import {
-	codeBlock,
-	SlashCommandBooleanOption,
-	SlashCommandBuilder,
-	SlashCommandNumberOption,
-	SlashCommandStringOption,
-} from "@discordjs/builders";
+import { codeBlock, SlashCommandBuilder } from "@discordjs/builders";
 import { MessageEmbed } from "discord.js";
 import { inspect } from "util";
 import type { CommandOptions } from "../Util";
@@ -16,23 +10,21 @@ const breakLength = 100;
 export const command: CommandOptions = {
 	data: new SlashCommandBuilder()
 		.setName("eval")
-		.setDescription("A private eval command.")
+		.setDescription("Execute some JavaScript code")
 		.setDefaultPermission(true)
-		.addStringOption(
-			new SlashCommandStringOption().setRequired(true).setName("input").setDescription("The input")
+		.addStringOption((option) =>
+			option.setRequired(true).setName("input").setDescription("The input")
 		)
-		.addBooleanOption(
-			new SlashCommandBooleanOption()
+		.addBooleanOption((option) =>
+			option
 				.setName("showhidden")
 				.setDescription("Whether or not to show hidden properties. Default: false")
 		)
-		.addNumberOption(
-			new SlashCommandNumberOption()
-				.setName("depth")
-				.setDescription("How many nested objects to check. Default: 2")
+		.addNumberOption((option) =>
+			option.setName("depth").setDescription("How many nested objects to check. Default: 2")
 		)
-		.addBooleanOption(
-			new SlashCommandBooleanOption()
+		.addBooleanOption((option) =>
+			option
 				.setName("ephemeral")
 				.setDescription("Whether or not to send an ephemeral response. Default: true")
 		),
@@ -45,7 +37,7 @@ export const command: CommandOptions = {
 		let result: unknown;
 
 		try {
-			(await eval(
+			result = (await eval(
 				`(async function(){${interaction.options.getString("input", true)}}).bind(this)()`
 			)) as unknown;
 		} catch (err) {
@@ -54,16 +46,22 @@ export const command: CommandOptions = {
 
 		console.log(result);
 		return {
-			embeds: inspect(result, {
-				showHidden: interaction.options.getBoolean("showhidden") ?? undefined,
-				depth: interaction.options.getNumber("depth") ?? undefined,
-				breakLength,
-				showProxy: true,
-				sorted: true,
-			})
-				.match(new RegExp(`[\\s\\S]{1,${embedLength - codeBlockLength}}`, "gu"))
-				?.map((s) => new MessageEmbed({ description: codeBlock("js", s) })),
+			embeds: [
+				new MessageEmbed({
+					description: codeBlock(
+						"js",
+						inspect(result, {
+							showHidden: interaction.options.getBoolean("showhidden") ?? undefined,
+							depth: interaction.options.getNumber("depth") ?? undefined,
+							breakLength,
+							showProxy: true,
+							sorted: true,
+						})
+					).slice(0, embedLength - codeBlockLength),
+				}),
+			],
 			ephemeral: interaction.options.getBoolean("ephemeral") ?? true,
 		};
 	},
+	ownerOnly: true,
 };

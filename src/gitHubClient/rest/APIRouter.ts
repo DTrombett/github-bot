@@ -4,7 +4,8 @@ import type { APIRouter, RequestOptions } from "../../Util";
 import { sLowercaseRequestMethod } from "../../Util";
 import type RESTManager from "./RESTManager";
 
-const empty = {} as APIRouter;
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const empty = (() => {}) as APIRouter;
 const reflectors = [
 	"toString",
 	"valueOf",

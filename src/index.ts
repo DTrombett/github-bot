@@ -13,6 +13,7 @@ import {
 	sString,
 	interactionCreate,
 	loadCommands,
+	logError,
 } from "./Util";
 
 config();
@@ -94,10 +95,7 @@ process
 			`A promise was ${type}${type === "reject" ? "e" : ""}d more than once!`
 		);
 	})
-	.on("uncaughtException", (err) => {
-		console.error(err);
-		FileLogger.error(err);
-	})
+	.on("uncaughtException", logError)
 	.on("warning", (warn) => {
 		console.warn(warn);
 		FileLogger.warn(inspect(warn));
@@ -108,10 +106,7 @@ const client = new Client(options)
 	.on(Events.DEBUG, (message) => {
 		ConsoleAndFileLogger.info(message);
 	})
-	.on(Events.ERROR, (error) => {
-		console.error(error);
-		FileLogger.error(inspect(error));
-	})
+	.on(Events.ERROR, logError)
 	.on(Events.GUILD_CREATE, (guild) => {
 		ConsoleAndFileLogger.info("Joined a new guild!");
 		console.info(guild);
@@ -132,8 +127,7 @@ const client = new Client(options)
 	})
 	.on(Events.SHARD_DISCONNECT, (event, shard) => {
 		ConsoleAndFileLogger.error(`Shard ${shard} disconnected for an error!`);
-		console.error(event);
-		FileLogger.error(inspect(event));
+		logError(event);
 	})
 	.on(Events.SHARD_RECONNECTING, (shard) => {
 		ConsoleAndFileLogger.info(`Shard ${shard} is reconnecting...`);
@@ -142,18 +136,14 @@ const client = new Client(options)
 		ConsoleAndFileLogger.info(`Shard ${shard} resumed! Replayed ${events} events.`);
 	});
 
-const gitHubClient = new GitHubClient({ token, client }).on("rateLimit", (data) => {
-	console.error(data);
-	FileLogger.error(inspect(data));
-});
+const gitHubClient = new GitHubClient({ token, client }).on("rateLimit", logError);
 
 client.on(Events.CLIENT_READY, async (readyClient) => {
 	const results = await Promise.all([
 		loadCommands(gitHubClient),
 		readyClient.application.fetch(),
 	] as const).catch((err) => {
-		console.error(err);
-		FileLogger.error(inspect(err));
+		logError(err);
 		return undefined;
 	});
 	ConsoleAndFileLogger.info(

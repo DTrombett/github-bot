@@ -91,24 +91,11 @@
     "array-callback-return": "warn",
     "arrow-body-style": "warn",
     "class-methods-use-this": "warn",
-    "complexity": [
-      "warn",
-      10
-    ],
     "consistent-return": "warn",
     "default-case-last": "warn",
     "default-case": "warn",
     "grouped-accessor-pairs": "warn",
     "guard-for-in": "warn",
-    "no-magic-numbers": [
-      "warn",
-      {
-        "ignore": [
-          0,
-          1
-        ]
-      }
-    ],
     "no-alert": "warn",
     "no-await-in-loop": "warn",
     "no-caller": "warn",
