@@ -1,7 +1,5 @@
-import { assert, instance, record } from "superstruct";
+import { assert, instance } from "superstruct";
 import { GitHubClient } from "..";
-import type { ResponseData } from "../../Util";
-import { sJson, sString } from "../../Util";
 
 export class Base {
 	/**
@@ -12,16 +10,12 @@ export class Base {
 	/**
 	 * When this was last fetched
 	 */
-	lastUpdated: Date | null = null;
+	lastUpdated: Date | null = new Date();
 
-	protected _etag: string | null = null;
-	protected _requestId: string | null = null;
-
-	constructor(client: GitHubClient, { data, headers }: ResponseData) {
+	constructor(client: GitHubClient, data: unknown) {
 		assert(client, instance(GitHubClient));
-		assert(data, record(sString, sJson));
 		Object.defineProperty(this, "client", { value: client });
-		this._patch({ headers, data });
+		this._patch(data);
 	}
 
 	/**
@@ -31,15 +25,7 @@ export class Base {
 		return this.lastUpdated?.getTime() ?? null;
 	}
 
-	_patch({ headers }: ResponseData): this {
-		const etag = headers.get("etag");
-		const requestId = headers.get("x-github-request-id");
-		const lastUpdated = headers.get("date");
-
-		if (etag != null) [, this._etag] = etag.split('"');
-		if (requestId != null) this._requestId = requestId;
-		if (lastUpdated != null) this.lastUpdated = new Date(lastUpdated);
-
+	_patch(_data: unknown): this {
 		return this;
 	}
 

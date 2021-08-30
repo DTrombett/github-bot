@@ -15,6 +15,8 @@ const baseHeaders = {
 	"Time-Zone": "Europe/Rome",
 } as const;
 
+const etags: Record<string, string | undefined> = {};
+
 export class APIRequest {
 	method: RequestMethod;
 	options: Required<RequestOptions>;
@@ -32,14 +34,13 @@ export class APIRequest {
 			query = {},
 			requestTimeout = defaultRequestTimeout,
 			json = !["raw", "diff", "sha", "patch", "html", "base64"].includes(acceptType),
-			etag = null,
 			retry = true,
 		}: RequestOptions = {}
 	) {
 		assert(rest, instance(RESTManager));
 		assert(method, sRequestMethod);
 		assert(path, sString);
-		assert({ acceptType, data, headers, query, requestTimeout, json, etag }, sRequestOptions);
+		assert({ acceptType, data, headers, query, requestTimeout, json }, sRequestOptions);
 		this.rest = rest;
 		this.path = path;
 		if (["diff", "patch", "sha", "base64"].includes(acceptType) && json)
@@ -55,7 +56,6 @@ export class APIRequest {
 			query: { ...query },
 			requestTimeout,
 			json,
-			etag,
 			retry,
 		};
 		const queryString = new URLSearchParams(
@@ -72,8 +72,9 @@ export class APIRequest {
 		const controller = new AbortController();
 		const headers: Record<string, string> = { ...baseHeaders, ...this.options.headers };
 		const body = this.options.data != null ? JSON.stringify(this.options.data) : undefined;
+		const etag = etags[this.url];
 		if (this.options.data != null) headers["Content-Type"] = "application/json";
-		if (this.options.etag != null) headers["If-None-Match"] = `"${this.options.etag}"`;
+		if (etag != null) headers["If-None-Match"] = `"${etag}"`;
 		if (is(process.env.GITHUB_TOKEN, sString))
 			headers.Authorization = `Basic ${Buffer.from(
 				`DTrombett:${process.env.GITHUB_TOKEN}`
@@ -88,9 +89,15 @@ export class APIRequest {
 			agent,
 			body,
 			signal: controller.signal as RequestInit["signal"],
-		}).finally(() => {
-			clearTimeout(timeout);
-		});
+		})
+			.then((res) => {
+				const newEtag = res.headers.get("etag");
+				if (newEtag != null) [, etags[this.url]] = newEtag.split('"');
+				return res;
+			})
+			.finally(() => {
+				clearTimeout(timeout);
+			});
 	}
 }
 

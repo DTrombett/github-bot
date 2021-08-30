@@ -1,5 +1,5 @@
 import type { GitHubClient } from "..";
-import type { ResponseData, UserData } from "../../Util";
+import type { UserData } from "../../Util";
 import User from "../structures/User";
 import BaseManager from "./BaseManager";
 
@@ -17,7 +17,7 @@ export class UserManager extends BaseManager<User> {
 		return super.fetch(username);
 	}
 
-	add(response: ResponseData<UserData>): User {
-		return super.add(response, response.data.login);
+	add(data: UserData): User {
+		return super.add(data, data.login);
 	}
 }

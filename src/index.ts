@@ -39,7 +39,7 @@ const keepOverLimit = (user: { id: Snowflake; client: Client }): boolean =>
 
 const options: ClientOptions = {
 	intents: 1 << IntentsFlags.GUILDS,
-	allowedMentions: { parse: ["everyone"] },
+	allowedMentions: { repliedUser: false, parse: [], roles: [], users: [] },
 	failIfNotExists: false,
 	http: {
 		api: "https://canary.discord.com/api",

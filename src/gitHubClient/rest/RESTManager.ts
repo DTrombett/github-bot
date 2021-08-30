@@ -3,7 +3,7 @@ import APIRequest from "./APIRequest";
 import routeBuilder from "./APIRouter";
 import RequestHandler from "./RequestHandler";
 import type { GitHubClient } from "..";
-import type { APIRouter, RequestMethod, RequestOptions, ResponseData } from "../../Util";
+import type { APIRouter, RequestMethod, RequestOptions } from "../../Util";
 
 const sweepInterval = 60000;
 export class RESTManager {
@@ -29,11 +29,7 @@ export class RESTManager {
 		return routeBuilder(this);
 	}
 
-	request(
-		method: RequestMethod,
-		url: string,
-		options: RequestOptions = {}
-	): Promise<ResponseData | null> {
+	request<D>(method: RequestMethod, url: string, options: RequestOptions = {}): Promise<D | null> {
 		const apiRequest = new APIRequest(this, method, url, options);
 		let handler = this.handlers.get(apiRequest.path);
 		if (!handler) {

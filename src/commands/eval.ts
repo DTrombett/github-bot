@@ -2,6 +2,7 @@ import { codeBlock, SlashCommandBuilder } from "@discordjs/builders";
 import { MessageEmbed } from "discord.js";
 import { inspect } from "util";
 import type { CommandOptions } from "../Util";
+import { logError } from "../Util";
 
 const embedLength = 4096;
 const codeBlockLength = 10;
@@ -34,6 +35,10 @@ export const command: CommandOptions = {
 				content: "You're not allowed to run this command!",
 				ephemeral: true,
 			});
+
+		interaction
+			.deferReply({ ephemeral: interaction.options.getBoolean("ephemeral") ?? true })
+			.catch(logError);
 		let result: unknown;
 
 		try {
@@ -45,7 +50,7 @@ export const command: CommandOptions = {
 		}
 
 		console.log(result);
-		return {
+		return void interaction.editReply({
 			embeds: [
 				new MessageEmbed({
 					description: codeBlock(
@@ -60,8 +65,9 @@ export const command: CommandOptions = {
 					).slice(0, embedLength - codeBlockLength),
 				}),
 			],
-			ephemeral: interaction.options.getBoolean("ephemeral") ?? true,
-		};
+		});
 	},
 	ownerOnly: true,
 };
+
+export default command;

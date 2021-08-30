@@ -7,6 +7,8 @@ import type { CommandOptions } from ".";
 import { ConsoleAndFileLogger, sBoolean, sCommandOptions } from ".";
 import type { GitHubClient } from "../gitHubClient";
 import { logError } from "./error";
+import { fetchFollowers } from "./fetchFollowers";
+import fetchUser from "./fetchUser";
 
 export const commands = new Collection<string, Command>();
 
@@ -132,9 +134,19 @@ export const handleError = (interaction: CommandInteraction): Promise<void> => {
 export const interactionCreate: (
 	...args: ClientEvents[ConstantsEvents["INTERACTION_CREATE"]]
 ) => Awaited<void> = async (interaction) => {
-	if (!interaction.isCommand()) return;
-	const command = commands.get(interaction.commandName);
-	await (command?.run(interaction).catch(logError) ?? handleError(interaction));
+	if (interaction.isCommand()) {
+		const command = commands.get(interaction.commandName);
+		return command?.run(interaction).catch(logError) ?? handleError(interaction);
+	}
+	if (interaction.isButton()) {
+		const { client } = commands.first()!;
+		const [func, ...args] = interaction.customId.split("-");
+		const arg0 = args.join("-");
+		if (func === "fetchuser") return fetchUser(client, interaction, arg0);
+		if (func === "fetchfollowers") return fetchFollowers(client, interaction, arg0);
+		return interaction.deferUpdate();
+	}
+	return undefined;
 };
 
 export const loadCommands = (client: GitHubClient): Promise<typeof commands> =>

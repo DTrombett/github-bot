@@ -2,7 +2,6 @@ import { AsyncQueue } from "@sapphire/async-queue";
 import type { FetchError, Response } from "node-fetch";
 import { assert, instance } from "superstruct";
 import { setTimeout } from "timers/promises";
-import type { Json, ResponseData } from "../../Util";
 import { sNumber } from "../../Util";
 import APIRequest from "./APIRequest";
 import type { ErrorData } from "./GitHubAPIError";
@@ -20,12 +19,10 @@ export const errorCodes = {
 
 const milliseconds = 1_000;
 
-export const parseResponse = async (res: Response): Promise<ResponseData> => ({
-	data: (await (res.headers.get("content-type")?.startsWith("application/json") === true
+export const parseResponse = async <D>(res: Response): Promise<D> =>
+	(res.headers.get("content-type")?.startsWith("application/json") === true
 		? res.json()
-		: res.buffer())) as Record<string, Json>,
-	headers: res.headers,
-});
+		: res.buffer()) as Promise<D>;
 export const calculateReset = (reset: string): number =>
 	new Date(Number(reset) * milliseconds).getTime();
 
@@ -67,9 +64,9 @@ export class RequestHandler {
 		};
 	}
 
-	async push(request: APIRequest): Promise<ResponseData | null> {
+	async push<D>(request: APIRequest): Promise<D | null> {
 		await this.queue.wait().catch(console.error);
-		return this.execute(request).finally(() => {
+		return this.execute<D>(request).finally(() => {
 			this.queue.shift();
 		});
 	}
@@ -91,7 +88,7 @@ export class RequestHandler {
 		return setTimeout(ms, (this.manager.globalDelay = null));
 	}
 
-	async execute(request: APIRequest): Promise<ResponseData | null> {
+	async execute<D>(request: APIRequest): Promise<D | null> {
 		assert(request, instance(APIRequest));
 		if (this.limited)
 			this.manager.globalDelay ??= this.globalDelayFor(
@@ -131,7 +128,7 @@ export class RequestHandler {
 			RequestHandler.onRateLimit(request, limit, timeout);
 		}
 		const response = await parseResponse(res).catch(RequestHandler.onParseError(request));
-		throw new GitHubAPIError(response.data as ErrorData, res.status, request);
+		throw new GitHubAPIError(response as ErrorData, res.status, request);
 	}
 }
 

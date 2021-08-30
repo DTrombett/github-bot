@@ -1,5 +1,6 @@
+import { Collection } from "@discordjs/collection";
 import type { GitHubClient } from "..";
-import type { ResponseData, UserData } from "../../Util";
+import type { UserData } from "../../Util";
 import { UserType } from "../../Util";
 import Base from "./Base";
 
@@ -12,12 +13,12 @@ export class User extends Base {
 	/**
 	 * The id of this user
 	 */
-	id!: number;
+	id: number | null = null;
 
 	/**
 	 * The avatar URL of this user
 	 */
-	avatarUrl!: `https://avatars.githubusercontent.com/u/${string}?v=4`;
+	avatarUrl: `https://avatars.githubusercontent.com/u/${string}?v=4` | null = null;
 	/**
 	 * The Gravatar id of this user, if any
 	 */
@@ -26,12 +27,12 @@ export class User extends Base {
 	/**
 	 * The GitHub url of this user
 	 */
-	url!: `https://github.com/${string}`;
+	url: `https://github.com/${string}` = `https://github.com/${this.username}`;
 
 	/**
 	 * If this user is a normal user or an organization
 	 */
-	type!: UserType;
+	type: UserType = 1;
 
 	/**
 	 * An optional name displayed in the app
@@ -98,11 +99,16 @@ export class User extends Base {
 	 */
 	updatedAt: Date | null = null;
 
-	protected _nodeId!: string;
+	/**
+	 * A collection of the followers of this user
+	 */
+	followers = new Collection<string, User>();
 
-	constructor(client: GitHubClient, response: ResponseData<UserData>) {
-		super(client, response);
-		this._patch(response);
+	protected _nodeId: string | null = null;
+
+	constructor(client: GitHubClient, data: UserData) {
+		super(client, data);
+		this._patch(data);
 	}
 
 	/**
@@ -139,12 +145,29 @@ export class User extends Base {
 	 */
 	fetch(): Promise<this> {
 		return this.client.api.users[this.username]
-			.get<UserData, null>({ etag: this._etag })
+			.get<UserData>()
 			.then((response) => (response ? this._patch(response) : this));
 	}
 
-	_patch({ headers, data }: ResponseData<UserData>): this {
-		super._patch({ data, headers });
+	/**
+	 * Fetch followers of this user.
+	 * @param perPage - Number of results to fetch
+	 * @param page - Number of the page to fetch
+	 * @returns A collection of users who follow this account
+	 */
+	fetchFollowers(perPage = 10, page = 1): Promise<Collection<string, User>> {
+		return this.client.api
+			.users(this.username)
+			.followers.get<UserData[]>({ query: { per_page: perPage.toString(), page: page.toString() } })
+			.then((followers) => {
+				if (followers)
+					for (const user of followers) this.followers.set(user.login, this.client.users.add(user));
+				return this.followers;
+			});
+	}
+
+	_patch(data: UserData): this {
+		super._patch(data);
 
 		const {
 			avatar_url,
@@ -169,13 +192,13 @@ export class User extends Base {
 			updated_at,
 		} = data;
 
-		this._nodeId = node_id;
 		this.username = login;
-		this.id = id;
-		this.avatarUrl = avatar_url;
-		if (gravatar_id !== "") this.gravatarId = gravatar_id;
-		this.url = html_url;
-		this.type = UserType[type];
+		if (node_id != null) this._nodeId = node_id;
+		if (id != null) this.id = id;
+		if (avatar_url != null) this.avatarUrl = avatar_url;
+		if (gravatar_id != null && gravatar_id !== "") this.gravatarId = gravatar_id;
+		if (html_url != null) this.url = html_url;
+		if (type != null) this.type = UserType[type];
 		if (name != null) this.name = name;
 		if (company != null) this.company = company;
 		if (blog != null && blog !== "") this.website = blog;

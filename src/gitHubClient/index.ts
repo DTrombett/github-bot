@@ -1,4 +1,5 @@
 import type { Awaited, Client } from "discord.js";
+import type Collection from "@discordjs/collection";
 import EventEmitter from "events";
 import { assert } from "superstruct";
 import type { APIRouter, ClientUserData, GitHubClientOptions, GitHubEvents } from "../Util";
@@ -6,6 +7,7 @@ import { ProjectData, sGitHubClientOptions } from "../Util";
 import { UserManager } from "./managers/UserManager";
 import RESTManager from "./rest/RESTManager";
 import { ClientUser } from "./structures/ClientUser";
+import type User from "./structures/User";
 
 export const defaultRequestTimeout = 10_000;
 
@@ -16,7 +18,7 @@ export class GitHubClient extends EventEmitter {
 	userAgent: string;
 	requestTimeout: number;
 	rest = new RESTManager(this);
-	user: ClientUser | null = null;
+	user!: ClientUser;
 	users = new UserManager(this);
 
 	constructor(options: GitHubClientOptions) {
@@ -41,11 +43,34 @@ export class GitHubClient extends EventEmitter {
 		return this.rest.api;
 	}
 
+	/**
+	 * Fetch the authenticated user and set the user property.
+	 * @returns The fetched client user
+	 */
 	async login(): Promise<ClientUser> {
-		return this.rest.api.user.get<ClientUserData>().then((response) => {
-			this.users.cache.set(response.data.login, (this.user = new ClientUser(this, response)));
+		return this.api.user.get<ClientUserData>().then((user) => {
+			this.users.cache.set(user!.login, (this.user = new ClientUser(this, user!)));
 			return this.user;
 		});
+	}
+
+	/**
+	 * Fetch the followers of a user.
+	 * @param username - The user to get
+	 * @param perPage - How many followers to get
+	 * @param page - The page to get
+	 * @returns A collection of followers of the user
+	 */
+	fetchFollowers(
+		username?: string | null,
+		perPage = 10,
+		page = 1
+	): Promise<Collection<string, User>> {
+		return (
+			username != null
+				? this.users.cache.get(username) ?? this.users.add({ login: username })
+				: this.user
+		).fetchFollowers(perPage, page);
 	}
 
 	override on<E extends keyof GitHubEvents>(

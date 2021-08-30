@@ -1,18 +1,16 @@
 import { Collection } from "discord.js";
 import { assert, instance } from "superstruct";
 import { GitHubClient } from "..";
-import type { ResponseData } from "../../Util";
 import type Base from "../structures/Base";
 
 export class BaseManager<
 	V extends Base,
-	D extends V["_patch"] extends (response: ResponseData<infer R>) => V
-		? R
-		: never = V["_patch"] extends (response: ResponseData<infer R>) => V ? R : never,
-	T extends new (client: GitHubClient, response: ResponseData<D>) => V = new (
-		client: GitHubClient,
-		response: ResponseData<D>
+	D extends V["_patch"] extends (data: infer R) => V ? R : never = V["_patch"] extends (
+		data: infer R
 	) => V
+		? R
+		: never,
+	T extends new (client: GitHubClient, data: D) => V = new (client: GitHubClient, data: D) => V
 > {
 	/**
 	 * The client that instantiated this
@@ -34,24 +32,19 @@ export class BaseManager<
 		this.routers = routers ?? [];
 	}
 
-	/**
-	 * Fetch a user from the API.
-	 * @param username The username of the user to fetch
-	 * @returns The fetched user
-	 */
 	async fetch(id: string): Promise<V> {
 		return (
 			this.cache.get(id)?.fetch() ??
 			this.add(
-				await this.client
+				(await this.client
 					.api(...this.routers.map((route) => (route === ":id" ? id : route)))
-					.get<D>(),
+					.get<D>())!,
 				id
 			)
 		);
 	}
 
-	add(response: ResponseData<D>, id: string): V {
+	add(response: D, id: string): V {
 		const existing = this.cache.get(id);
 		if (existing) return existing._patch(response);
 		const entry = new this._holds(this.client, response);

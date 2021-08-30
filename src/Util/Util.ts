@@ -1,6 +1,5 @@
 import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "@discordjs/builders";
 import type { Awaited, Client, CommandInteraction, InteractionReplyOptions } from "discord.js";
-import type { Headers } from "node-fetch";
 import type { Command, Json } from ".";
 import type RateLimitError from "../gitHubClient/rest/RateLimitError";
 
@@ -20,11 +19,6 @@ export const enum IntentsFlags {
 	DIRECT_MESSAGES,
 	DIRECT_MESSAGE_REACTIONS,
 	DIRECT_MESSAGE_TYPING,
-}
-
-export const enum GithubAuthorData {
-	username = "GitHub",
-	avatar = "df91181b3f1cf0ef1592fbe18e0962d7",
 }
 
 export type GitHubClientOptions = {
@@ -53,10 +47,9 @@ export type APIRouter = {
 	[key: string]: APIRouter;
 	(...routers: string[]): APIRouter;
 } & {
-		[K in Lowercase<RequestMethod>]: <T = unknown, N extends null = never>(
-			options?: Omit<RequestOptions, K extends "delete" | "get" | "head" ? "data" : never> &
-				(N extends null ? { etag: string | null } : { etag?: never })
-		) => Promise<N | ResponseData<T>>;
+		[K in Lowercase<RequestMethod>]: <T = unknown>(
+			options?: Omit<RequestOptions, K extends "delete" | "get" | "head" ? "data" : never>
+		) => Promise<T | null>;
 	};
 
 export type AcceptType =
@@ -76,7 +69,6 @@ export type RequestOptions = {
 	requestTimeout?: number;
 	acceptType?: AcceptType;
 	json?: boolean;
-	etag?: string | null;
 	retry?: boolean;
 };
 export type RequestMethod = "DELETE" | "GET" | "HEAD" | "PATCH" | "POST" | "PUT";
@@ -96,13 +88,8 @@ export type CommandOptions = {
 	run: (
 		this: Command,
 		interaction: CommandInteraction
-	) => Awaited<InteractionReplyOptions | string | void>;
+	) => Awaited<void> | InteractionReplyOptions | string;
 	ownerOnly?: boolean;
-};
-
-export type ResponseData<T = unknown> = {
-	data: T;
-	headers: Headers;
 };
 
 export enum UserType {
@@ -118,13 +105,13 @@ export type UserPlan = {
 };
 
 export type ClientUserData = UserData & {
-	private_gists: number;
-	total_private_repos: number;
-	owned_private_repos: number;
-	disk_usage: number;
-	collaborators: number;
-	two_factor_authentication: boolean;
-	plan: {
+	private_gists?: number;
+	total_private_repos?: number;
+	owned_private_repos?: number;
+	disk_usage?: number;
+	collaborators?: number;
+	two_factor_authentication?: boolean;
+	plan?: {
 		name: string;
 		space: number;
 		private_repos: number;
@@ -132,7 +119,7 @@ export type ClientUserData = UserData & {
 	};
 };
 export type UserData = {
-	avatar_url: `https://avatars.githubusercontent.com/u/${string}?v=4`;
+	avatar_url?: `https://avatars.githubusercontent.com/u/${string}?v=4`;
 	bio?: string | null;
 	blog?: string;
 	company?: string | null;
@@ -144,14 +131,14 @@ export type UserData = {
 	following_url?: `https://api.github.com/users/${string}/following{/other_user}`;
 	following?: number;
 	gists_url?: `https://api.github.com/users/${string}/gists{/gist_id}`;
-	gravatar_id: string;
+	gravatar_id?: string;
 	hireable?: boolean;
-	html_url: `https://github.com/users/${string}`;
-	id: number;
+	html_url?: `https://github.com/users/${string}`;
+	id?: number;
 	location?: string | null;
 	login: string;
 	name?: string | null;
-	node_id: string;
+	node_id?: string;
 	organizations_url?: `https://api.github.com/users/${string}/orgs`;
 	public_gists?: number;
 	public_repos?: number;
@@ -161,7 +148,7 @@ export type UserData = {
 	starred_url?: `https://api.github.com/users/${string}/starred{/owner}{/repo}`;
 	subscriptions_url?: `https://api.github.com/users/${string}/subscriptions`;
 	twitter_username?: string | null;
-	type: "Organization" | "User";
+	type?: "Organization" | "User";
 	updated_at?: string;
 	url?: `https://api.github.com/users/${string}`;
 };
