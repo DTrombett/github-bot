@@ -1,7 +1,6 @@
-import { Collection } from "discord.js";
-import { assert, instance } from "superstruct";
-import { GitHubClient } from "..";
-import type Base from "../structures/Base";
+import { Collection } from "@discordjs/collection";
+import type { GitHubClient } from "..";
+import type { Base } from "../structures/Base";
 
 export class BaseManager<
 	V extends Base,
@@ -26,7 +25,6 @@ export class BaseManager<
 	private routers: string[];
 
 	constructor(client: GitHubClient, holds: T, routers?: string[]) {
-		assert(client, instance(GitHubClient));
 		Object.defineProperty(this, "client", { value: client });
 		this._holds = holds;
 		this.routers = routers ?? [];

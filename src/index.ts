@@ -1,4 +1,4 @@
-import type { ClientOptions, GuildMember, Snowflake } from "discord.js";
+import type { ClientOptions } from "discord.js";
 import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
 import { assert } from "superstruct";
@@ -7,13 +7,12 @@ import { GitHubClient } from "./gitHubClient";
 import {
 	ConsoleAndFileLogger,
 	FileLogger,
-	IntentsFlags,
 	ProjectData,
-	sClientOptions,
 	sString,
 	interactionCreate,
 	loadCommands,
 	logError,
+	Numbers,
 } from "./Util";
 
 config();
@@ -21,72 +20,44 @@ config();
 const { GITHUB_TOKEN: token } = process.env;
 const { Events, ActivityTypes } = Constants;
 
-// Numbers
-const invalidRequestWarningInterval = 1_000;
-const restGlobalRateLimit = 50;
-const restRequestTimeout = 10_000;
-const restTimeOffset = 1_000;
-const invalidatedExitCode = 502;
-const maxInvalidRequestsPerMinute = 1_000;
-const invalidRequestExitCode = 508;
-const secondsIn10Minutes = 600;
-const milliseconds = 1_000;
-const seconds = 60;
-const sweepMinutes = 60;
-
-const keepOverLimit = (user: { id: Snowflake; client: Client }): boolean =>
-	user.id === user.client.user?.id;
-
 const options: ClientOptions = {
-	intents: 1 << IntentsFlags.GUILDS,
+	intents: Numbers.intents,
 	allowedMentions: { repliedUser: false, parse: [], roles: [], users: [] },
-	failIfNotExists: false,
+	failIfNotExists: true,
 	http: {
 		api: "https://canary.discord.com/api",
+		version: Numbers.version,
 	},
-	invalidRequestWarningInterval,
-	presence: { activities: [{ name: "With GitHub", type: ActivityTypes.PLAYING }] },
-	restGlobalRateLimit,
-	restRequestTimeout,
-	restTimeOffset,
+	invalidRequestWarningInterval: Numbers.invalidRequestWarningInterval,
+	presence: { activities: [{ name: "with GitHub", type: ActivityTypes.PLAYING }] },
+	restGlobalRateLimit: Numbers.restGlobalRateLimit,
+	restRequestTimeout: Numbers.restRequestTimeout,
+	restTimeOffset: Numbers.restTimeOffset,
 	shards: "auto",
 	userAgentSuffix: [`@${ProjectData.author}/${ProjectData.name}@v${ProjectData.version}`],
 	ws: {
-		large_threshold: 0,
+		large_threshold: Numbers.largeThreshold,
 	},
 	makeCache: Options.cacheWithLimits({
 		...Options.defaultMakeCacheSettings,
-		BaseGuildEmojiManager: 0,
-		GuildBanManager: 0,
-		GuildInviteManager: 0,
-		GuildMemberManager: {
-			maxSize: 1,
-			sweepInterval: seconds * sweepMinutes,
-			sweepFilter: () => (member: GuildMember) => member.id !== member.client.user?.id,
-			keepOverLimit,
-		} as const,
-		GuildStickerManager: 0,
-		PresenceManager: 0,
-		ReactionManager: 0,
-		ReactionUserManager: 0,
-		StageInstanceManager: 0,
-		UserManager: { maxSize: 1_000, sweepInterval: seconds * sweepMinutes, keepOverLimit },
-		VoiceStateManager: 0,
-		MessageManager: 0,
-		ThreadMemberManager: 0,
+		BaseGuildEmojiManager: Numbers.cache,
+		GuildBanManager: Numbers.cache,
+		GuildInviteManager: Numbers.cache,
+		GuildMemberManager: Numbers.cache,
+		GuildStickerManager: Numbers.cache,
+		MessageManager: Numbers.cache,
+		PresenceManager: Numbers.cache,
+		ReactionManager: Numbers.cache,
+		ReactionUserManager: Numbers.cache,
+		StageInstanceManager: Numbers.cache,
+		ThreadManager: Numbers.cache,
+		ThreadMemberManager: Numbers.cache,
+		UserManager: Numbers.cache,
+		VoiceStateManager: Numbers.cache,
 	}),
-	rejectOnRateLimit: ({ global, limit, method, path, route, timeout }) => {
-		ConsoleAndFileLogger.warn(
-			`Discord ${method} request queued on ${route} for ${
-				global ? "global" : "route"
-			} ratelimit.\nLimit of ${limit} requests reached for ${timeout}ms on path ${path}.`
-		);
-		return false;
-	},
 };
 
 assert(token, sString);
-assert(options, sClientOptions);
 
 process
 	.on("exit", (code) => ConsoleAndFileLogger.error(`Process exited with code ${code}`))
@@ -107,36 +78,19 @@ const client = new Client(options)
 		ConsoleAndFileLogger.info(message);
 	})
 	.on(Events.ERROR, logError)
-	.on(Events.GUILD_CREATE, (guild) => {
-		ConsoleAndFileLogger.info("Joined a new guild!");
-		console.info(guild);
-	})
-	.on(Events.GUILD_DELETE, (guild) => {
-		ConsoleAndFileLogger.info("Left a guild!");
-		console.info(guild);
-		FileLogger.info(inspect(guild, { compact: false }));
-	})
-	.on(Events.INVALIDATED, () => process.exit(invalidatedExitCode))
+	.on(Events.INVALIDATED, () => process.exit(Numbers.invalidatedExitCode))
 	.on(Events.INVALID_REQUEST_WARNING, ({ count, remainingTime }) => {
-		const requestsPerMinute = count / (secondsIn10Minutes / (remainingTime / milliseconds));
+		const requestsPerMinute =
+			count / (Numbers.secondsIn10Minutes / (remainingTime / Numbers.milliseconds));
 		ConsoleAndFileLogger.info(`Registered ${requestsPerMinute} requests per minute.`);
-		if (requestsPerMinute >= maxInvalidRequestsPerMinute) process.exit(invalidRequestExitCode);
+		if (requestsPerMinute >= Numbers.maxInvalidRequestsPerMinute)
+			process.exit(Numbers.invalidRequestExitCode);
 	})
 	.on(Events.WARN, (warn) => {
 		ConsoleAndFileLogger.warn(warn);
-	})
-	.on(Events.SHARD_DISCONNECT, (event, shard) => {
-		ConsoleAndFileLogger.error(`Shard ${shard} disconnected for an error!`);
-		logError(event);
-	})
-	.on(Events.SHARD_RECONNECTING, (shard) => {
-		ConsoleAndFileLogger.info(`Shard ${shard} is reconnecting...`);
-	})
-	.on(Events.SHARD_RESUME, (shard, events) => {
-		ConsoleAndFileLogger.info(`Shard ${shard} resumed! Replayed ${events} events.`);
 	});
 
-const gitHubClient = new GitHubClient({ token, client }).on("rateLimit", logError);
+const gitHubClient = new GitHubClient({ token, client });
 
 client.on(Events.CLIENT_READY, async (readyClient) => {
 	const results = await Promise.all([
@@ -147,9 +101,7 @@ client.on(Events.CLIENT_READY, async (readyClient) => {
 		return undefined;
 	});
 	ConsoleAndFileLogger.info(
-		`Succesfully logged as ${readyClient.user.tag} in ${
-			readyClient.guilds.cache.size
-		} guilds with ${results?.[0].size ?? 0} commands.`
+		`Succesfully logged as ${readyClient.user.tag} with ${results?.[0].size ?? 0} commands.`
 	);
 });
 

@@ -1,7 +1,8 @@
 import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "@discordjs/builders";
 import type { Awaited, Client, CommandInteraction, InteractionReplyOptions } from "discord.js";
-import type { Command, Json } from ".";
-import type RateLimitError from "../gitHubClient/rest/RateLimitError";
+import type { Command } from ".";
+
+export type Json = Json[] | boolean | number | string | { [property: string]: Json } | null;
 
 export const enum IntentsFlags {
 	GUILDS,
@@ -35,10 +36,6 @@ export const enum ProjectData {
 	version = "0.0.1",
 	description = "A Discord bot that interacts with Github API.",
 }
-
-export type GitHubEvents = {
-	rateLimit: [rateLimitData: RateLimitError];
-};
 
 // eslint-disable-next-line @typescript-eslint/sort-type-union-intersection-members
 export type APIRouter = {
@@ -152,3 +149,65 @@ export type UserData = {
 	updated_at?: string;
 	url?: `https://api.github.com/users/${string}`;
 };
+
+export const enum Numbers {
+	invalidRequestWarningInterval = 1_000,
+	restGlobalRateLimit = 50,
+	restRequestTimeout = 10_000,
+	restTimeOffset = 1_000,
+	invalidatedExitCode = 502,
+	maxInvalidRequestsPerMinute = 1_000,
+	invalidRequestExitCode = 508,
+	secondsIn10Minutes = 600,
+	milliseconds = 1_000,
+	largeThreshold = 0,
+	intents = 1,
+	version = 9,
+	cache = 0,
+	followersCount = 18,
+	defaultRequestTimeout = 60_000,
+	defaultStatusCode = 500,
+	badRequestCode = 400,
+	serverErrorCode = 500,
+	rateLimitCode = 429,
+	unknownCode = 600,
+	notModifiedCode = 304,
+	sweepInterval = 60_000,
+	resultsPerPage = 10,
+}
+
+export const enum ButtonId {
+	user = "userinfo",
+	followers = "showfollowers",
+}
+export type ErrorCode =
+	| "already_exists"
+	| "invalid"
+	| "missing_field"
+	| "missing"
+	| "unprocessable";
+export type DetailedError =
+	| {
+			message: string;
+			documentation_url?: string;
+			resource: string;
+			field: string;
+			code: "custom";
+	  }
+	| {
+			resource: string;
+			field: string;
+			code: ErrorCode;
+	  };
+export type ErrorData = {
+	message: string;
+	documentation_url?: string;
+	errors?: DetailedError[];
+};
+export enum ErrorDescription {
+	missing = "This resource does not exist",
+	missing_field = "This field is required",
+	invalid = "The formatting of this field is invalid",
+	already_exists = "Another resource has the same value as this field",
+	unprocessable = "This field is not valid",
+}

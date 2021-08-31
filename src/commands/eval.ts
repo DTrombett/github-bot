@@ -1,12 +1,11 @@
-import { codeBlock, SlashCommandBuilder } from "@discordjs/builders";
-import { MessageEmbed } from "discord.js";
-import { inspect } from "util";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import { exec } from "child_process";
+import { promisify } from "util";
 import type { CommandOptions } from "../Util";
-import { logError } from "../Util";
+import { logError, logEval } from "../Util";
 
-const embedLength = 4096;
-const codeBlockLength = 10;
-const breakLength = 100;
+// @ts-expect-error This is to be executed in the eval
+const shell = promisify(exec);
 
 export const command: CommandOptions = {
 	data: new SlashCommandBuilder()
@@ -36,11 +35,11 @@ export const command: CommandOptions = {
 				ephemeral: true,
 			});
 
-		interaction
+		await interaction
 			.deferReply({ ephemeral: interaction.options.getBoolean("ephemeral") ?? true })
 			.catch(logError);
-		let result: unknown;
 
+		let result: unknown;
 		try {
 			result = (await eval(
 				`(async function(){${interaction.options.getString("input", true)}}).bind(this)()`
@@ -49,23 +48,13 @@ export const command: CommandOptions = {
 			result = err;
 		}
 
-		console.log(result);
-		return void interaction.editReply({
-			embeds: [
-				new MessageEmbed({
-					description: codeBlock(
-						"js",
-						inspect(result, {
-							showHidden: interaction.options.getBoolean("showhidden") ?? undefined,
-							depth: interaction.options.getNumber("depth") ?? undefined,
-							breakLength,
-							showProxy: true,
-							sorted: true,
-						})
-					).slice(0, embedLength - codeBlockLength),
-				}),
-			],
-		});
+		await logEval(
+			interaction,
+			result,
+			interaction.options.getBoolean("showhidden") ?? undefined,
+			interaction.options.getNumber("depth") ?? undefined
+		);
+		return undefined;
 	},
 	ownerOnly: true,
 };

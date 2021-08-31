@@ -1,17 +1,14 @@
-import type { Awaited, Client } from "discord.js";
 import type Collection from "@discordjs/collection";
-import EventEmitter from "events";
+import type { Client } from "discord.js";
 import { assert } from "superstruct";
-import type { APIRouter, ClientUserData, GitHubClientOptions, GitHubEvents } from "../Util";
-import { ProjectData, sGitHubClientOptions } from "../Util";
+import type { APIRouter, ClientUserData, GitHubClientOptions } from "../Util";
+import { Numbers, ProjectData, sGitHubClientOptions } from "../Util";
 import { UserManager } from "./managers/UserManager";
 import RESTManager from "./rest/RESTManager";
 import { ClientUser } from "./structures/ClientUser";
 import type User from "./structures/User";
 
-export const defaultRequestTimeout = 10_000;
-
-export class GitHubClient extends EventEmitter {
+export class GitHubClient {
 	token: string;
 	timeZone: string;
 	discordClient: Client;
@@ -22,7 +19,6 @@ export class GitHubClient extends EventEmitter {
 	users = new UserManager(this);
 
 	constructor(options: GitHubClientOptions) {
-		super();
 		assert(options, sGitHubClientOptions);
 
 		const {
@@ -30,7 +26,7 @@ export class GitHubClient extends EventEmitter {
 			client,
 			timeZone = "Europe/Rome",
 			userAgent = `@${ProjectData.author}/${ProjectData.name}@${ProjectData.version}`,
-			requestTimeout = defaultRequestTimeout,
+			requestTimeout = Numbers.defaultRequestTimeout,
 		} = options;
 		this.token = token;
 		this.timeZone = timeZone;
@@ -63,7 +59,7 @@ export class GitHubClient extends EventEmitter {
 	 */
 	fetchFollowers(
 		username?: string | null,
-		perPage = 10,
+		perPage = Numbers.resultsPerPage,
 		page = 1
 	): Promise<Collection<string, User>> {
 		return (
@@ -71,16 +67,5 @@ export class GitHubClient extends EventEmitter {
 				? this.users.cache.get(username) ?? this.users.add({ login: username })
 				: this.user
 		).fetchFollowers(perPage, page);
-	}
-
-	override on<E extends keyof GitHubEvents>(
-		event: E,
-		listener: (...args: GitHubEvents[E]) => Awaited<void>
-	): this {
-		return super.on(event, listener as (...args: any[]) => void);
-	}
-
-	override emit<E extends keyof GitHubEvents>(event: E, ...args: GitHubEvents[E]): boolean {
-		return super.emit(event, ...args);
 	}
 }

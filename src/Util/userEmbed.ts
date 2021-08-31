@@ -1,11 +1,11 @@
 import { bold, hyperlink, time } from "@discordjs/builders";
 import { MessageEmbed } from "discord.js";
 import { UserType } from "./Util";
-import type User from "../gitHubClient/structures/User";
+import type { User } from "../gitHubClient/structures/User";
 
 const userColor = ["", "RED", "BLUE"] as const;
 
-export function userEmbed({
+export const userEmbed = ({
 	avatarUrl,
 	bio,
 	client,
@@ -26,7 +26,7 @@ export function userEmbed({
 	url,
 	username,
 	website,
-}: User): MessageEmbed {
+}: User): MessageEmbed => {
 	const description: string[] = [];
 	if (bio != null) description.push(`${bio}\n`);
 	if (company != null) description.push(`${bold("Company:")} ${company}`);
@@ -53,6 +53,6 @@ export function userEmbed({
 		.setColor(userColor[type]);
 	if (avatarUrl != null) embed.setThumbnail(avatarUrl);
 	return embed;
-}
+};
 
 export default userEmbed;

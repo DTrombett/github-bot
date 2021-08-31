@@ -1,5 +1,4 @@
-import { assert, instance } from "superstruct";
-import { GitHubClient } from "..";
+import type { GitHubClient } from "..";
 
 export class Base {
 	/**
@@ -13,7 +12,6 @@ export class Base {
 	lastUpdated: Date | null = new Date();
 
 	constructor(client: GitHubClient, data: unknown) {
-		assert(client, instance(GitHubClient));
 		Object.defineProperty(this, "client", { value: client });
 		this._patch(data);
 	}

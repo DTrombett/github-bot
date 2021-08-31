@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import type { Snowflake } from "discord-api-types";
+import type { Snowflake } from "discord-api-types/v9";
 import type {
 	ActivitiesOptions,
 	CacheFactory,
@@ -66,13 +66,15 @@ import {
 import type {
 	AcceptType,
 	CommandOptions,
+	DetailedError,
+	ErrorCode,
+	ErrorData,
 	GitHubClientOptions,
 	Json,
 	RateLimitData as RateLimit,
 	RequestMethod,
 	RequestOptions,
 } from ".";
-import type { DetailedError, ErrorCode, ErrorData } from "../gitHubClient/rest/GitHubAPIError";
 
 const activityType = 5;
 const messageComponentType = 3;

@@ -4,11 +4,13 @@ import { promises } from "fs";
 import { join } from "path";
 import { assert, instance, optional } from "superstruct";
 import type { CommandOptions } from ".";
-import { ConsoleAndFileLogger, sBoolean, sCommandOptions } from ".";
+import { showFollowers } from "./showFollowers";
+import { ButtonId, Numbers } from "./Util";
+import { sBoolean, sCommandOptions } from "./superstruct";
+import { ConsoleAndFileLogger } from "./Console";
 import type { GitHubClient } from "../gitHubClient";
-import { logError } from "./error";
-import { fetchFollowers } from "./fetchFollowers";
-import fetchUser from "./fetchUser";
+import { errorMessage, logError } from "./error";
+import { userInfo } from "./userInfo";
 
 export const commands = new Collection<string, Command>();
 
@@ -140,10 +142,22 @@ export const interactionCreate: (
 	}
 	if (interaction.isButton()) {
 		const { client } = commands.first()!;
-		const [func, ...args] = interaction.customId.split("-");
-		const arg0 = args.join("-");
-		if (func === "fetchuser") return fetchUser(client, interaction, arg0);
-		if (func === "fetchfollowers") return fetchFollowers(client, interaction, arg0);
+		const [func, ...args] = interaction.customId.split("-") as [string, ...string[]];
+		const arg = args.join("-");
+		if (func === ButtonId.user) {
+			await interaction.deferReply().catch(logError);
+			userInfo(interaction, arg, await client.users.fetch(arg).catch(errorMessage)).catch(logError);
+			return undefined;
+		}
+		if (func === ButtonId.followers) {
+			await interaction.deferReply().catch(logError);
+			showFollowers(
+				interaction,
+				arg,
+				await client.fetchFollowers(arg, Numbers.followersCount).catch(errorMessage)
+			).catch(logError);
+			return undefined;
+		}
 		return interaction.deferUpdate();
 	}
 	return undefined;

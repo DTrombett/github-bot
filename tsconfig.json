@@ -16,12 +16,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "resolveJsonModule": true,
-    "checkJs": true,
-    "allowJs": true,
     "newLine": "lf",
     "importHelpers": true,
     "outDir": "dist",
     "pretty": true,
-    "removeComments": true
+    "removeComments": true,
+    "sourceMap": true
   }
 }

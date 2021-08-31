@@ -2,29 +2,20 @@ import { AsyncQueue } from "@sapphire/async-queue";
 import type { FetchError, Response } from "node-fetch";
 import { assert, instance } from "superstruct";
 import { setTimeout } from "timers/promises";
-import { sNumber } from "../../Util";
-import APIRequest from "./APIRequest";
-import type { ErrorData } from "./GitHubAPIError";
-import GitHubAPIError from "./GitHubAPIError";
-import HTTPError from "./HTTPError";
+import type { ErrorData } from "../../Util";
+import { logError, Numbers, sNumber } from "../../Util";
+import { APIRequest } from "./APIRequest";
+import { GitHubAPIError } from "./GitHubAPIError";
+import { HTTPError } from "./HTTPError";
 import { RateLimitError } from "./RateLimitError";
-import RESTManager from "./RESTManager";
-
-export const errorCodes = {
-	badRequest: 400,
-	serverError: 500,
-	rateLimit: 429,
-	unknown: 600,
-} as const;
-
-const milliseconds = 1_000;
+import type { RESTManager } from "./RESTManager";
 
 export const parseResponse = async <D>(res: Response): Promise<D> =>
 	(res.headers.get("content-type")?.startsWith("application/json") === true
 		? res.json()
 		: res.buffer()) as Promise<D>;
 export const calculateReset = (reset: string): number =>
-	new Date(Number(reset) * milliseconds).getTime();
+	new Date(Number(reset) * Numbers.milliseconds).getTime();
 
 export class RequestHandler {
 	manager: RESTManager;
@@ -33,7 +24,6 @@ export class RequestHandler {
 	remaining: number;
 	limit: number;
 	constructor(manager: RESTManager) {
-		assert(manager, instance(RESTManager));
 		this.manager = manager;
 		this.queue = new AsyncQueue();
 		this.reset = -1;
@@ -42,8 +32,7 @@ export class RequestHandler {
 	}
 
 	private static onRateLimit(request: APIRequest, limit: number, timeout: number): void {
-		request.rest.client.emit(
-			"rateLimit",
+		logError(
 			new RateLimitError({
 				timeout,
 				limit,
@@ -57,7 +46,6 @@ export class RequestHandler {
 			throw new HTTPError(err.message, err.constructor.name, undefined, request);
 		};
 	}
-
 	private static onFetchError(request: APIRequest): (reason: FetchError) => never {
 		return (error: FetchError) => {
 			throw new HTTPError(error.message, error.constructor.name, undefined, request);
@@ -92,11 +80,13 @@ export class RequestHandler {
 		assert(request, instance(APIRequest));
 		if (this.limited)
 			this.manager.globalDelay ??= this.globalDelayFor(
-				this.manager.globalReset != null ? this.manager.globalReset + milliseconds - Date.now() : 0
+				this.manager.globalReset != null
+					? this.manager.globalReset + Numbers.milliseconds - Date.now()
+					: 0
 			);
 		await this.manager.globalDelay;
 		if (this.manager.globalReset == null || this.manager.globalReset < Date.now()) {
-			this.manager.globalReset = Date.now() + milliseconds;
+			this.manager.globalReset = Date.now() + Numbers.milliseconds;
 			this.manager.globalRemaining = this.manager.globalLimit;
 		}
 		this.manager.globalRemaining--;
@@ -109,21 +99,21 @@ export class RequestHandler {
 		this.remaining = remaining != null ? Number(remaining) : 1;
 		this.reset = reset != null ? calculateReset(reset) : Date.now();
 
-		const retryAfter = !this.remaining ? this.reset * milliseconds - Date.now() : 0;
+		const retryAfter = !this.remaining ? this.reset * Numbers.milliseconds - Date.now() : 0;
 
 		if (retryAfter > 0) {
 			this.manager.globalRemaining = 0;
 			this.manager.globalReset = Date.now() + retryAfter;
 		}
 		if (res.ok) return parseResponse(res);
-		if (res.status === 304) return null;
-		if (res.status >= errorCodes.serverError && res.status < errorCodes.unknown) {
+		if (res.status === Numbers.notModifiedCode) return null;
+		if (res.status >= Numbers.serverErrorCode && res.status < Numbers.unknownCode) {
 			if (request.options.retry) return this.execute(request);
 			throw new HTTPError(res.statusText, res.constructor.name, res.status, request);
 		}
-		if (res.status === errorCodes.rateLimit) {
+		if (res.status === Numbers.rateLimitCode) {
 			const limit = this.manager.globalLimit;
-			const timeout = this.manager.globalReset + milliseconds - Date.now();
+			const timeout = this.manager.globalReset + Numbers.milliseconds - Date.now();
 
 			RequestHandler.onRateLimit(request, limit, timeout);
 		}

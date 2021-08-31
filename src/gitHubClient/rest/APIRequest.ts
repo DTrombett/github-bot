@@ -1,20 +1,17 @@
 import https from "https";
 import type { RequestInit, Response } from "node-fetch";
 import fetch from "node-fetch";
-import { assert, instance, is } from "superstruct";
+import { assert, is } from "superstruct";
 import { URLSearchParams } from "url";
 import type { RequestMethod, RequestOptions } from "../../Util";
-import { sRequestMethod, sRequestOptions, sString } from "../../Util";
-import RESTManager from "./RESTManager";
+import { Numbers, sRequestMethod, sRequestOptions, sString } from "../../Util";
+import type { RESTManager } from "./RESTManager";
 
 const agent = new https.Agent({ keepAlive: true });
-const defaultRequestTimeout = 60000;
-
 const baseHeaders = {
 	"User-Agent": "DTrombett",
 	"Time-Zone": "Europe/Rome",
 } as const;
-
 const etags: Record<string, string | undefined> = {};
 
 export class APIRequest {
@@ -32,12 +29,11 @@ export class APIRequest {
 			data = null,
 			headers = {},
 			query = {},
-			requestTimeout = defaultRequestTimeout,
+			requestTimeout = Numbers.defaultRequestTimeout,
 			json = !["raw", "diff", "sha", "patch", "html", "base64"].includes(acceptType),
 			retry = true,
 		}: RequestOptions = {}
 	) {
-		assert(rest, instance(RESTManager));
 		assert(method, sRequestMethod);
 		assert(path, sString);
 		assert({ acceptType, data, headers, query, requestTimeout, json }, sRequestOptions);
@@ -75,10 +71,9 @@ export class APIRequest {
 		const etag = etags[this.url];
 		if (this.options.data != null) headers["Content-Type"] = "application/json";
 		if (etag != null) headers["If-None-Match"] = `"${etag}"`;
-		if (is(process.env.GITHUB_TOKEN, sString))
-			headers.Authorization = `Basic ${Buffer.from(
-				`DTrombett:${process.env.GITHUB_TOKEN}`
-			).toString("base64")}`;
+		const { GITHUB_TOKEN: token } = process.env;
+		if (is(token, sString))
+			headers.Authorization = `Basic ${Buffer.from(`DTrombett:${token}`).toString("base64")}`;
 
 		const timeout = setTimeout(() => {
 			controller.abort();

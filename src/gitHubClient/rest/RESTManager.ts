@@ -1,11 +1,11 @@
 import { Collection } from "@discordjs/collection";
-import APIRequest from "./APIRequest";
-import routeBuilder from "./APIRouter";
-import RequestHandler from "./RequestHandler";
+import { APIRequest } from "./APIRequest";
+import { buildRoute } from "./APIRouter";
+import { RequestHandler } from "./RequestHandler";
 import type { GitHubClient } from "..";
 import type { APIRouter, RequestMethod, RequestOptions } from "../../Util";
+import { Numbers } from "../../Util";
 
-const sweepInterval = 60000;
 export class RESTManager {
 	client: GitHubClient;
 	handlers: Collection<string, RequestHandler>;
@@ -22,11 +22,11 @@ export class RESTManager {
 		this.globalDelay = null;
 		setInterval(() => {
 			this.handlers.sweep((handler) => handler._inactive);
-		}, sweepInterval).unref();
+		}, Numbers.sweepInterval).unref();
 	}
 
 	get api(): APIRouter {
-		return routeBuilder(this);
+		return buildRoute(this);
 	}
 
 	request<D>(method: RequestMethod, url: string, options: RequestOptions = {}): Promise<D | null> {

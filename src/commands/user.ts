@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import type { CommandOptions } from "../Util";
-import { fetchUser } from "../Util";
+import { errorMessage, logError, userInfo } from "../Util";
 
 export const command: CommandOptions = {
 	data: new SlashCommandBuilder()
@@ -12,10 +12,14 @@ export const command: CommandOptions = {
 				.setDescription("The username of the user to get. Default: DTrombett")
 		),
 	async run(interaction) {
-		return fetchUser(
-			this.client,
+		await interaction.deferReply().catch(logError);
+
+		const username = interaction.options.getString("username") ?? this.client.user.username;
+
+		await userInfo(
 			interaction,
-			interaction.options.getString("username") ?? undefined
+			username,
+			await this.client.users.fetch(username).catch(errorMessage)
 		);
 	},
 };

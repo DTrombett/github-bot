@@ -1,7 +1,7 @@
 import type { GitHubClient } from "..";
 import type { UserData } from "../../Util";
-import User from "../structures/User";
-import BaseManager from "./BaseManager";
+import { User } from "../structures/User";
+import { BaseManager } from "./BaseManager";
 
 export class UserManager extends BaseManager<User> {
 	constructor(client: GitHubClient) {

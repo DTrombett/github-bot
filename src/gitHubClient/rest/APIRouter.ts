@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/sort-type-union-intersection-members */
 import { is } from "superstruct";
 import type { APIRouter, RequestOptions } from "../../Util";
 import { sLowercaseRequestMethod } from "../../Util";
-import type RESTManager from "./RESTManager";
+import type { RESTManager } from "./RESTManager";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const empty = (() => {}) as APIRouter;
@@ -15,7 +14,7 @@ const reflectors = [
 	Symbol.for("nodejs.util.inspect.custom"),
 ];
 
-export function buildRoute(manager: RESTManager): APIRouter {
+export const buildRoute = (manager: RESTManager): APIRouter => {
 	const route = [""];
 	const handler: ProxyHandler<APIRouter> = {
 		get(_, name) {
@@ -34,6 +33,6 @@ export function buildRoute(manager: RESTManager): APIRouter {
 		},
 	};
 	return new Proxy<APIRouter>(empty, { ...handler });
-}
+};
 
 export default buildRoute;

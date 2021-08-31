@@ -1,7 +1,10 @@
-import type Collection from "@discordjs/collection";
+import type { Collection } from "@discordjs/collection";
 import type { GitHubClient } from "..";
 import type { ClientUserData, UserData, UserPlan } from "../../Util";
-import User from "./User";
+import { Numbers } from "../../Util";
+import { User } from "./User";
+
+const defaultPlan = { collaboratorsCount: 0, name: "free", privateRepositoryCount: 0, space: 0 };
 
 export class ClientUser extends User {
 	/**
@@ -37,7 +40,7 @@ export class ClientUser extends User {
 	/**
 	 * The plan of this user
 	 */
-	plan: UserPlan = { collaboratorsCount: 0, name: "free", privateRepositoryCount: 0, space: 0 };
+	plan: UserPlan = defaultPlan;
 
 	constructor(client: GitHubClient, data: ClientUserData) {
 		super(client, data);
@@ -60,7 +63,7 @@ export class ClientUser extends User {
 	 * @param page - Number of the page to fetch
 	 * @returns A collection of users who follow this account
 	 */
-	fetchFollowers(perPage = 10, page = 1): Promise<Collection<string, User>> {
+	fetchFollowers(perPage = Numbers.resultsPerPage, page = 1): Promise<Collection<string, User>> {
 		return this.client.api.user.followers
 			.get<UserData[]>({ query: { per_page: perPage.toString(), page: page.toString() } })
 			.then((followers) => {

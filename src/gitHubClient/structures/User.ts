@@ -1,8 +1,8 @@
 import { Collection } from "@discordjs/collection";
 import type { GitHubClient } from "..";
 import type { UserData } from "../../Util";
-import { UserType } from "../../Util";
-import Base from "./Base";
+import { Numbers, UserType } from "../../Util";
+import { Base } from "./Base";
 
 export class User extends Base {
 	/**
@@ -155,7 +155,7 @@ export class User extends Base {
 	 * @param page - Number of the page to fetch
 	 * @returns A collection of users who follow this account
 	 */
-	fetchFollowers(perPage = 10, page = 1): Promise<Collection<string, User>> {
+	fetchFollowers(perPage = Numbers.resultsPerPage, page = 1): Promise<Collection<string, User>> {
 		return this.client.api
 			.users(this.username)
 			.followers.get<UserData[]>({ query: { per_page: perPage.toString(), page: page.toString() } })

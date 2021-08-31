@@ -12,6 +12,7 @@ export class RateLimitError extends Error {
 		super(`A rate limit was hit on ${path}`);
 
 		assert({ timeout, limit, method, path }, sRateLimitData);
+
 		this.timeout = timeout;
 		this.method = method;
 		this.path = path;
