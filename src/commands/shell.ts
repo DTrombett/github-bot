@@ -38,4 +38,5 @@ export const command: CommandOptions = {
 		await logShell(interaction, input, await asyncExec(input).catch(getError));
 		return undefined;
 	},
+	ownerOnly: true,
 };
