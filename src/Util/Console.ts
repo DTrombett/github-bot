@@ -1,29 +1,29 @@
-import { mkdirSync, rmSync, writeFileSync } from "fs";
+import { writeFileSync } from "fs";
 import { join } from "path";
 import { createLogger, format, transports } from "winston";
+import type { Log } from ".";
 
-const now = Date.now();
-const path = join(__dirname, `../../logs`);
-const filePath = join(path, `${now}.log`);
+const filename = join(__dirname, "../../logs", `${Date.now()}.log`);
 
-rmSync(path, { recursive: true, force: true });
-mkdirSync(path);
-writeFileSync(filePath, "");
+writeFileSync(filename, "");
 
-export const ConsoleAndFileLogger = createLogger({
-	transports: [new transports.Console(), new transports.File({ filename: filePath })],
+/**
+ * A logger to the console and the log file
+ */
+export const ConsoleAndFileLogger: Log = createLogger({
+	transports: [new transports.Console(), new transports.File({ filename })],
 	format: format.printf(
 		(logInfo) =>
-			`[${logInfo.level.toUpperCase()}] - ${
-				logInfo.message
-			} (${new Date().toLocaleString()} - RAM: ${
-				Math.round((process.memoryUsage().heapUsed * 25) / 262144) / 100
-			}MB)`
+			`[${logInfo.level.toUpperCase()}] - ${logInfo.message} (${new Date().toLocaleString()})`
 	),
 	level: "silly",
 });
-export const FileLogger = createLogger({
-	transports: new transports.File({ filename: filePath }),
+
+/**
+ * A logger to only the log file
+ */
+export const FileLogger: Log = createLogger({
+	transports: new transports.File({ filename }),
 	level: "silly",
 });
 

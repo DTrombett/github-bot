@@ -1,5 +1,5 @@
 import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "@discordjs/builders";
-import type { Awaited, Client, CommandInteraction, InteractionReplyOptions } from "discord.js";
+import type { Awaited, Client, CommandInteraction } from "discord.js";
 import type { Command } from ".";
 
 export type Json = Json[] | boolean | number | string | { [property: string]: Json } | null;
@@ -82,10 +82,7 @@ export type CommandOptions = {
 		| Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">
 		| SlashCommandBuilder
 		| SlashCommandSubcommandsOnlyBuilder;
-	run: (
-		this: Command,
-		interaction: CommandInteraction
-	) => Awaited<void> | InteractionReplyOptions | string;
+	run: (this: Command, interaction: CommandInteraction) => Awaited<void>;
 	ownerOnly?: boolean;
 };
 
@@ -160,8 +157,8 @@ export const enum Numbers {
 	invalidRequestExitCode = 508,
 	secondsIn10Minutes = 600,
 	milliseconds = 1_000,
-	largeThreshold = 0,
-	intents = 1,
+	largeThreshold = 50,
+	intents = 0,
 	version = 9,
 	cache = 0,
 	followersCount = 18,
@@ -211,3 +208,11 @@ export enum ErrorDescription {
 	already_exists = "Another resource has the same value as this field",
 	unprocessable = "This field is not valid",
 }
+
+export type Log = {
+	/**
+	 * Log a message to the log file and/or to the console
+	 * @param message - The message to log
+	 */
+	[K in "debug" | "error" | "info" | "warn"]: (message: string) => Log;
+};

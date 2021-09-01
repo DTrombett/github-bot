@@ -53,7 +53,7 @@ export class RequestHandler {
 	}
 
 	async push<D>(request: APIRequest): Promise<D | null> {
-		await this.queue.wait().catch(console.error);
+		await this.queue.wait();
 		return this.execute<D>(request).finally(() => {
 			this.queue.shift();
 		});

@@ -6,6 +6,13 @@ import { ButtonId } from "./Util";
 import type { User } from "../gitHubClient/structures/User";
 import type { APIMessage } from "discord-api-types/v9";
 
+/**
+ * Show the followers of a user.
+ * @param interaction - The interaction that instantiated this
+ * @param username - The userame requested
+ * @param followers - A collection of followers for the user
+ * @returns The message sent
+ */
 export const showFollowers = (
 	interaction: ButtonInteraction | CommandInteraction,
 	username: string,

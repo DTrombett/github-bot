@@ -10,7 +10,8 @@
     "lint": "npx eslint src --fix",
     "compile": "npx tsc",
     "commands": "node ./dist/registerCommands.js",
-    "login": "node ."
+    "login": "node .",
+    "pm2": "pm2 start dist/index.js --max-memory-restart 100M --exp-backoff-restart-delay=1000 --wait-ready --listen-timeout 10000 --shutdown-with-message"
   },
   "author": "DTrombett",
   "license": "MIT",

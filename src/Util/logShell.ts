@@ -7,6 +7,13 @@ const splitOptions = { append: "```", maxLength: 1024, prepend: "```powershell\n
 const name = "\u200b";
 const boldInput = bold("Input");
 
+/**
+ * Display the result of a shell command.
+ * @param interaction - The interaction that instantiated this
+ * @param input - The input command
+ * @param output - The result of the shell command
+ * @returns The message sent
+ */
 export const logShell = (
 	interaction: ButtonInteraction | CommandInteraction,
 	input: string,

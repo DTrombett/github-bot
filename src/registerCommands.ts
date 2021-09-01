@@ -8,14 +8,15 @@ import { assert, boolean, instance, optional, string, type } from "superstruct";
 
 console.time("Register slash commands");
 
-config();
+config({ path: join(__dirname, "../.env") });
 
 const {
 	DISCORD_CLIENT_ID: applicationId,
 	TEST_GUILD: guildId,
 	DISCORD_TOKEN: token,
-	GLOBAL_COMMANDS: registerGlobal,
+	GLOBAL_COMMANDS,
 } = process.env;
+const registerGlobal = GLOBAL_COMMANDS === "true";
 
 assert(applicationId, string());
 assert(guildId, string());
@@ -46,14 +47,13 @@ promises
 		new REST({ version: "9" })
 			.setToken(token)
 			.put(
-				registerGlobal === "true"
+				registerGlobal
 					? Routes.applicationCommands(applicationId)
 					: Routes.applicationGuildCommands(applicationId, guildId),
 				{
-					body: (registerGlobal === "true"
-						? files.filter((cmd) => cmd.command.ownerOnly !== true)
-						: files
-					).map((file) => file.command.data.toJSON()),
+					body: files
+						.filter((cmd) => Boolean(cmd.command.ownerOnly) !== registerGlobal)
+						.map((file) => file.command.data.toJSON()),
 				}
 			)
 	)

@@ -1,6 +1,7 @@
 import type { ClientOptions } from "discord.js";
 import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
+import { join } from "path";
 import { assert } from "superstruct";
 import { inspect } from "util";
 import { GitHubClient } from "./gitHubClient";
@@ -15,19 +16,21 @@ import {
 	Numbers,
 } from "./Util";
 
-config();
+config({ path: join(__dirname, "../.env") });
 
 const { GITHUB_TOKEN: token } = process.env;
 const { Events, ActivityTypes } = Constants;
-
 const options: ClientOptions = {
-	intents: Numbers.intents,
+	...Options.createDefault(),
 	allowedMentions: { repliedUser: false, parse: [], roles: [], users: [] },
-	failIfNotExists: true,
 	http: {
 		api: "https://canary.discord.com/api",
+		cdn: "https://cdn.discordapp.com",
+		invite: "https://discord.gg",
+		template: "https://discord.new",
 		version: Numbers.version,
 	},
+	intents: Numbers.intents,
 	invalidRequestWarningInterval: Numbers.invalidRequestWarningInterval,
 	presence: { activities: [{ name: "with GitHub", type: ActivityTypes.PLAYING }] },
 	restGlobalRateLimit: Numbers.restGlobalRateLimit,
@@ -37,7 +40,14 @@ const options: ClientOptions = {
 	userAgentSuffix: [`@${ProjectData.author}/${ProjectData.name}@v${ProjectData.version}`],
 	ws: {
 		large_threshold: Numbers.largeThreshold,
+		compress: true,
+		properties: {
+			$browser: "discord.js",
+			$device: "discord.js",
+			$os: process.platform,
+		},
 	},
+
 	makeCache: Options.cacheWithLimits({
 		...Options.defaultMakeCacheSettings,
 		BaseGuildEmojiManager: Numbers.cache,
@@ -54,56 +64,59 @@ const options: ClientOptions = {
 		ThreadMemberManager: Numbers.cache,
 		UserManager: Numbers.cache,
 		VoiceStateManager: Numbers.cache,
+		ApplicationCommandManager: Numbers.cache,
 	}),
 };
 
 assert(token, sString);
 
-process
-	.on("exit", (code) => ConsoleAndFileLogger.error(`Process exited with code ${code}`))
-	.on("multipleResolves", (type) => {
-		ConsoleAndFileLogger.warn(
-			`A promise was ${type}${type === "reject" ? "e" : ""}d more than once!`
-		);
-	})
-	.on("uncaughtException", logError)
-	.on("warning", (warn) => {
-		console.warn(warn);
-		FileLogger.warn(inspect(warn));
-	});
+const client = new Client(options);
+const gitHubClient = new GitHubClient({ token, client });
 
-const client = new Client(options)
-	.on(Events.INTERACTION_CREATE, interactionCreate)
-	.on(Events.DEBUG, (message) => {
-		ConsoleAndFileLogger.info(message);
+client
+	.once(Events.ERROR, logError)
+	.once(Events.INVALIDATED, () => process.exit(Numbers.invalidatedExitCode))
+	.once(Events.CLIENT_READY, async (readyClient) => {
+		await Promise.all([loadCommands(gitHubClient), readyClient.application.fetch()] as const).catch(
+			(err) => {
+				logError(err);
+				return undefined;
+			}
+		);
+		process.send?.("ready");
 	})
-	.on(Events.ERROR, logError)
-	.on(Events.INVALIDATED, () => process.exit(Numbers.invalidatedExitCode))
+	.on(Events.INTERACTION_CREATE, interactionCreate)
+	.on(Events.DEBUG, (message) => void ConsoleAndFileLogger.info(message))
+	.on(Events.WARN, (warn) => {
+		ConsoleAndFileLogger.warn(warn);
+	})
 	.on(Events.INVALID_REQUEST_WARNING, ({ count, remainingTime }) => {
 		const requestsPerMinute =
 			count / (Numbers.secondsIn10Minutes / (remainingTime / Numbers.milliseconds));
 		ConsoleAndFileLogger.info(`Registered ${requestsPerMinute} requests per minute.`);
 		if (requestsPerMinute >= Numbers.maxInvalidRequestsPerMinute)
 			process.exit(Numbers.invalidRequestExitCode);
+	});
+
+process
+	.once("exit", (code) => ConsoleAndFileLogger.error(`Process exited with code ${code}`))
+	.once("message", (msg) => {
+		if (msg === "shutdown") {
+			ConsoleAndFileLogger.error("Shutdown request received!");
+			client.destroy();
+			process.exit(0);
+		}
 	})
-	.on(Events.WARN, (warn) => {
-		ConsoleAndFileLogger.warn(warn);
+	.on("uncaughtException", logError)
+	.on("multipleResolves", (type) =>
+		ConsoleAndFileLogger.warn(
+			`A promise was ${type}${type === "reject" ? "e" : ""}d more than once!`
+		)
+	)
+	.on("warning", (warn) => {
+		console.warn(warn);
+		FileLogger.warn(inspect(warn));
 	});
-
-const gitHubClient = new GitHubClient({ token, client });
-
-client.on(Events.CLIENT_READY, async (readyClient) => {
-	const results = await Promise.all([
-		loadCommands(gitHubClient),
-		readyClient.application.fetch(),
-	] as const).catch((err) => {
-		logError(err);
-		return undefined;
-	});
-	ConsoleAndFileLogger.info(
-		`Succesfully logged as ${readyClient.user.tag} with ${results?.[0].size ?? 0} commands.`
-	);
-});
 
 void gitHubClient.login();
 void client.login();

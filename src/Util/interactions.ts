@@ -12,10 +12,13 @@ import type { GitHubClient } from "../gitHubClient";
 import { errorMessage, logError } from "./error";
 import { userInfo } from "./userInfo";
 
+/**
+ * A collection of all registered commands
+ */
 export const commands = new Collection<string, Command>();
 
 /**
- * Represent a Discord slash command
+ * Represent a Discord command
  */
 export class Command {
 	/**
@@ -34,7 +37,7 @@ export class Command {
 	enabled = true;
 
 	/**
-	 * If this command is private
+	 * If this command is private or not
 	 */
 	ownerOnly!: boolean;
 
@@ -44,10 +47,14 @@ export class Command {
 	readonly name: string;
 
 	/**
-	 * The GitHub client of this command
+	 * The GitHub client that instantiated this command
 	 */
 	readonly client: GitHubClient;
 
+	/**
+	 * @param options - Options for this command
+	 * @param client - The client that instantiated this
+	 */
 	constructor(options: CommandOptions, client: GitHubClient) {
 		assert(options, sCommandOptions);
 		this.client = client;
@@ -107,11 +114,7 @@ export class Command {
 				ephemeral: true,
 			});
 		try {
-			const result = await this.callback(interaction);
-			if (typeof result === "string" || typeof result === "object")
-				return void interaction[
-					interaction.replied || interaction.deferred ? "editReply" : "reply"
-				](result).catch(logError);
+			await this.callback(interaction);
 		} catch (err) {
 			logError(err);
 		}
@@ -125,29 +128,37 @@ export class Command {
 	}
 }
 
-export const handleError = (interaction: CommandInteraction): Promise<void> => {
-	ConsoleAndFileLogger.error(`Received command ${interaction.commandName} not loaded`);
-	return interaction[interaction.replied || interaction.deferred ? "editReply" : "reply"]({
-		content: "Sorry, there was a problem loading this command!",
-		ephemeral: true,
-	}).then(() => undefined);
-};
-
+/**
+ * A function to be executed when a new interaction is received.
+ * @param interaction - The received interaction
+ */
 export const interactionCreate: (
 	...args: ClientEvents[ConstantsEvents["INTERACTION_CREATE"]]
 ) => Awaited<void> = async (interaction) => {
 	if (interaction.isCommand()) {
 		const command = commands.get(interaction.commandName);
-		return command?.run(interaction).catch(logError) ?? handleError(interaction);
-	}
-	if (interaction.isButton()) {
+		if (command) {
+			command.run(interaction).catch(logError);
+			ConsoleAndFileLogger.info(
+				`Command ${command.name} executed by ${interaction.user.tag} (${interaction.user.id}) in ${
+					interaction.inGuild() ? `channel with id: ${interaction.channelId}` : "DM"
+				}`
+			);
+		} else {
+			ConsoleAndFileLogger.error(`Received command ${interaction.commandName} not loaded`);
+			interaction[interaction.replied || interaction.deferred ? "editReply" : "reply"]({
+				content: "Sorry, there was a problem loading this command!",
+				ephemeral: true,
+			}).catch(logError);
+		}
+	} else if (interaction.isButton()) {
 		const { client } = commands.first()!;
 		const [func, ...args] = interaction.customId.split("-") as [string, ...string[]];
 		const arg = args.join("-");
 		if (func === ButtonId.user) {
 			await interaction.deferReply().catch(logError);
 			userInfo(interaction, arg, await client.users.fetch(arg).catch(errorMessage)).catch(logError);
-			return undefined;
+			return;
 		}
 		if (func === ButtonId.followers) {
 			await interaction.deferReply().catch(logError);
@@ -156,13 +167,17 @@ export const interactionCreate: (
 				arg,
 				await client.fetchFollowers(arg, Numbers.followersCount).catch(errorMessage)
 			).catch(logError);
-			return undefined;
+			return;
 		}
-		return interaction.deferUpdate();
+		interaction.deferUpdate().catch(logError);
 	}
-	return undefined;
 };
 
+/**
+ * Load the commands from the `commands` directory.
+ * @param client - The client that instantiated this
+ * @returns A collection of all registered commands
+ */
 export const loadCommands = (client: GitHubClient): Promise<typeof commands> =>
 	promises
 		.readdir(join(__dirname, "../commands"))
