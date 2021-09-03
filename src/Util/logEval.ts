@@ -6,27 +6,24 @@ import { inspect } from "util";
 
 /**
  * Display the result of an eval expression.
- * @param interaction - The interaction that instantiated this
- * @param result - The result of the eval
- * @param showHidden - If hidden results should be displayed or not
- * @param depth - How many nested objects should be displayed
+ * @param data - The data for the eval
  * @returns The message sent
  */
-export const logEval = (
-	interaction: ButtonInteraction | CommandInteraction,
-	result: unknown,
-	showHidden?: boolean,
-	depth?: number
-): Promise<APIMessage | Message> => {
-	console.log(result);
-	return interaction.editReply({
+export const logEval = (data: {
+	interaction: ButtonInteraction | CommandInteraction;
+	result: unknown;
+	showHidden?: boolean;
+	depth?: number;
+}): Promise<APIMessage | Message> => {
+	console.log(data.result);
+	return data.interaction.editReply({
 		embeds: [
 			new MessageEmbed({
 				description: codeBlock(
 					"js",
-					inspect(result, {
-						showHidden,
-						depth,
+					inspect(data.result, {
+						showHidden: data.showHidden,
+						depth: data.depth,
 						breakLength: 100,
 						showProxy: true,
 						sorted: true,

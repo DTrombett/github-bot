@@ -1,16 +1,14 @@
-import type { Awaited, ClientEvents, ConstantsEvents } from "discord.js";
-import { Collection, CommandInteraction } from "discord.js";
+import type { ClientEvents, CommandInteraction, ConstantsEvents } from "discord.js";
+import { Collection } from "discord.js";
 import { promises } from "fs";
 import { join } from "path";
-import { assert, instance, optional } from "superstruct";
 import type { CommandOptions } from ".";
-import { showFollowers } from "./showFollowers";
-import { ButtonId, Numbers } from "./Util";
-import { sBoolean, sCommandOptions } from "./superstruct";
-import { ConsoleAndFileLogger } from "./Console";
 import type { GitHubClient } from "../gitHubClient";
+import { ConsoleAndFileLogger } from "./Console";
 import { errorMessage, logError } from "./error";
+import { showFollowers } from "./showFollowers";
 import { userInfo } from "./userInfo";
+import { ButtonId, Numbers } from "./UtilityTypes";
 
 /**
  * A collection of all registered commands
@@ -56,7 +54,6 @@ export class Command {
 	 * @param client - The client that instantiated this
 	 */
 	constructor(options: CommandOptions, client: GitHubClient) {
-		assert(options, sCommandOptions);
 		this.client = client;
 		this.name = options.data.name;
 		this.resolveProperties(options);
@@ -86,7 +83,6 @@ export class Command {
 	 * @returns The new command
 	 */
 	setEnabled(enabled?: boolean): this {
-		assert(enabled, optional(sBoolean));
 		this.enabled = enabled ?? this.enabled;
 		return this;
 	}
@@ -107,7 +103,6 @@ export class Command {
 	 * @param interaction - The interaction received
 	 */
 	async run(interaction: CommandInteraction): Promise<void> {
-		assert(interaction, instance(CommandInteraction));
 		if (!this.enabled)
 			return interaction.reply({
 				content: "Sorry, this command is temporarily disabled!",
@@ -132,46 +127,49 @@ export class Command {
  * A function to be executed when a new interaction is received.
  * @param interaction - The received interaction
  */
-export const interactionCreate: (
-	...args: ClientEvents[ConstantsEvents["INTERACTION_CREATE"]]
-) => Awaited<void> = async (interaction) => {
+export async function interactionCreate(
+	this: GitHubClient,
+	interaction: ClientEvents[ConstantsEvents["INTERACTION_CREATE"]][0]
+): Promise<void> {
 	if (interaction.isCommand()) {
 		const command = commands.get(interaction.commandName);
 		if (command) {
-			command.run(interaction).catch(logError);
-			ConsoleAndFileLogger.info(
+			await command.run(interaction).catch(logError);
+			return void ConsoleAndFileLogger.info(
 				`Command ${command.name} executed by ${interaction.user.tag} (${interaction.user.id}) in ${
 					interaction.inGuild() ? `channel with id: ${interaction.channelId}` : "DM"
 				}`
 			);
-		} else {
-			ConsoleAndFileLogger.error(`Received command ${interaction.commandName} not loaded`);
-			interaction[interaction.replied || interaction.deferred ? "editReply" : "reply"]({
-				content: "Sorry, there was a problem loading this command!",
-				ephemeral: true,
-			}).catch(logError);
 		}
-	} else if (interaction.isButton()) {
-		const { client } = commands.first()!;
+		ConsoleAndFileLogger.error(`Received command ${interaction.commandName} not loaded`);
+		return void interaction[interaction.replied || interaction.deferred ? "editReply" : "reply"]({
+			content: "Sorry, there was a problem loading this command!",
+			ephemeral: true,
+		}).catch(logError);
+	}
+	if (interaction.isButton()) {
 		const [func, ...args] = interaction.customId.split("-") as [string, ...string[]];
 		const arg = args.join("-");
 		if (func === ButtonId.user) {
 			await interaction.deferReply().catch(logError);
-			userInfo(interaction, arg, await client.users.fetch(arg).catch(errorMessage)).catch(logError);
-			return;
+			return void userInfo({
+				interaction,
+				username: arg,
+				user: await this.users.fetch(arg).catch(errorMessage),
+			}).catch(logError);
 		}
 		if (func === ButtonId.followers) {
 			await interaction.deferReply().catch(logError);
-			showFollowers(
+			return void showFollowers({
 				interaction,
-				arg,
-				await client.fetchFollowers(arg, Numbers.followersCount).catch(errorMessage)
-			).catch(logError);
-			return;
+				username: arg,
+				followers: await this.fetchFollowers(arg, Numbers.followersCount).catch(errorMessage),
+			}).catch(logError);
 		}
-		interaction.deferUpdate().catch(logError);
+		return interaction.deferUpdate().catch(logError);
 	}
-};
+	return undefined;
+}
 
 /**
  * Load the commands from the `commands` directory.

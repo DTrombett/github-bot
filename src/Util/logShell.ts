@@ -9,43 +9,40 @@ const boldInput = bold("Input");
 
 /**
  * Display the result of a shell command.
- * @param interaction - The interaction that instantiated this
- * @param input - The input command
- * @param output - The result of the shell command
+ * @param data - The data about the shell result
  * @returns The message sent
  */
-export const logShell = (
-	interaction: ButtonInteraction | CommandInteraction,
-	input: string,
-	{
-		stderr,
-		stdout,
-	}: {
+export const logShell = (data: {
+	interaction: ButtonInteraction | CommandInteraction;
+	input: string;
+	output: {
 		stdout: string;
 		stderr: string;
-	}
-): Promise<APIMessage | Message> => {
+	};
+}): Promise<APIMessage | Message> => {
 	const embed = new MessageEmbed()
-		.setDescription(`${boldInput}\n${codeBlock("shell", input)}`)
-		.setColor(stdout && stderr ? "YELLOW" : stderr ? "RED" : "GREEN")
+		.setDescription(`${boldInput}\n${codeBlock("shell", data.input)}`)
+		.setColor(
+			data.output.stdout && data.output.stderr ? "YELLOW" : data.output.stderr ? "RED" : "GREEN"
+		)
 		.setFooter("Executed at")
 		.setTimestamp()
 		.setTitle("Shell");
 
-	if (stdout)
+	if (data.output.stdout)
 		embed.addFields(
-			...Util.splitMessage(codeBlock("powershell", stdout), splitOptions)
+			...Util.splitMessage(codeBlock("powershell", data.output.stdout), splitOptions)
 				.map((value) => ({ value, name }))
 				.slice(0, Math.floor((6000 - embed.length) / 1024))
 		);
-	if (stderr)
+	if (data.output.stderr)
 		embed.addFields(
-			...Util.splitMessage(codeBlock("powershell", stderr), splitOptions)
+			...Util.splitMessage(codeBlock("powershell", data.output.stderr), splitOptions)
 				.map((value) => ({ value, name }))
 				.slice(0, Math.floor((6000 - embed.length) / 1024))
 		);
 
-	return interaction.editReply({
+	return data.interaction.editReply({
 		embeds: [embed],
 	});
 };

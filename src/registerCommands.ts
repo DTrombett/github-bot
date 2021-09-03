@@ -22,7 +22,7 @@ assert(applicationId, string());
 assert(guildId, string());
 assert(token, string());
 
-promises
+void promises
 	.readdir(join(__dirname, "commands"))
 	.then((files) =>
 		Promise.all(
@@ -60,5 +60,4 @@ promises
 	.then((res) => {
 		console.log(res);
 		console.timeEnd("Register slash commands");
-	})
-	.catch(console.error);
+	});

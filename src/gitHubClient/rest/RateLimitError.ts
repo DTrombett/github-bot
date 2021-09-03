@@ -1,6 +1,4 @@
-import { assert } from "superstruct";
 import type { RateLimitData } from "../../Util";
-import { sRateLimitData } from "../../Util";
 
 export class RateLimitError extends Error {
 	name: "RateLimitError" = "RateLimitError";
@@ -8,15 +6,13 @@ export class RateLimitError extends Error {
 	method: string;
 	path: string;
 	limit: number;
-	constructor({ timeout, limit, method, path }: RateLimitData) {
-		super(`A rate limit was hit on ${path}`);
+	constructor(data: RateLimitData) {
+		super(`A rate limit was hit on ${data.path}`);
 
-		assert({ timeout, limit, method, path }, sRateLimitData);
-
-		this.timeout = timeout;
-		this.method = method;
-		this.path = path;
-		this.limit = limit;
+		this.timeout = data.timeout;
+		this.method = data.method;
+		this.path = data.path;
+		this.limit = data.limit;
 	}
 }
 

@@ -1,6 +1,5 @@
-import { assert } from "superstruct";
 import type { ErrorData, RequestMethod } from "../../Util";
-import { ErrorDescription, sErrorData, sNumber } from "../../Util";
+import { ErrorDescription } from "../../Util";
 import type { APIRequest } from "./APIRequest";
 
 /**
@@ -14,9 +13,6 @@ export class GitHubAPIError extends Error {
 	requestData: unknown;
 	constructor(error: ErrorData, status: number, request: APIRequest) {
 		super();
-
-		assert(error, sErrorData);
-		assert(status, sNumber);
 
 		this.message = [error.message]
 			.concat(

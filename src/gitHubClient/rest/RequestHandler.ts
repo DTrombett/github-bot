@@ -1,10 +1,9 @@
 import { AsyncQueue } from "@sapphire/async-queue";
 import type { FetchError, Response } from "node-fetch";
-import { assert, instance } from "superstruct";
 import { setTimeout } from "timers/promises";
 import type { ErrorData } from "../../Util";
-import { logError, Numbers, sNumber } from "../../Util";
-import { APIRequest } from "./APIRequest";
+import { logError, Numbers } from "../../Util";
+import type { APIRequest } from "./APIRequest";
 import { GitHubAPIError } from "./GitHubAPIError";
 import { HTTPError } from "./HTTPError";
 import { RateLimitError } from "./RateLimitError";
@@ -43,13 +42,24 @@ export class RequestHandler {
 	}
 	private static onParseError(request: APIRequest): (reason: FetchError) => never {
 		return (err: FetchError) => {
-			throw new HTTPError(err.message, err.constructor.name, undefined, request);
+			throw new HTTPError({
+				message: err.message,
+				name: err.constructor.name,
+				code: undefined,
+				request,
+			});
 		};
 	}
-	private static onFetchError(request: APIRequest): (reason: FetchError) => never {
-		return (error: FetchError) => {
-			throw new HTTPError(error.message, error.constructor.name, undefined, request);
-		};
+	private static onFetchError(request: APIRequest) {
+		return (error: FetchError) =>
+			Promise.reject(
+				new HTTPError({
+					message: error.message,
+					name: error.constructor.name,
+					code: undefined,
+					request,
+				})
+			);
 	}
 
 	async push<D>(request: APIRequest): Promise<D | null> {
@@ -72,12 +82,10 @@ export class RequestHandler {
 	}
 
 	globalDelayFor(ms: number): Promise<null> {
-		assert(ms, sNumber);
 		return setTimeout(ms, (this.manager.globalDelay = null));
 	}
 
 	async execute<D>(request: APIRequest): Promise<D | null> {
-		assert(request, instance(APIRequest));
 		if (this.limited)
 			this.manager.globalDelay ??= this.globalDelayFor(
 				this.manager.globalReset != null
@@ -109,16 +117,25 @@ export class RequestHandler {
 		if (res.status === Numbers.notModifiedCode) return null;
 		if (res.status >= Numbers.serverErrorCode && res.status < Numbers.unknownCode) {
 			if (request.options.retry) return this.execute(request);
-			throw new HTTPError(res.statusText, res.constructor.name, res.status, request);
+			throw new HTTPError({
+				message: res.statusText,
+				name: res.constructor.name,
+				code: res.status,
+				request,
+			});
 		}
-		if (res.status === Numbers.rateLimitCode) {
-			const limit = this.manager.globalLimit;
-			const timeout = this.manager.globalReset + Numbers.milliseconds - Date.now();
+		if (res.status === Numbers.rateLimitCode)
+			RequestHandler.onRateLimit(
+				request,
+				this.manager.globalLimit,
+				this.manager.globalReset + Numbers.milliseconds - Date.now()
+			);
 
-			RequestHandler.onRateLimit(request, limit, timeout);
-		}
-		const response = await parseResponse(res).catch(RequestHandler.onParseError(request));
-		throw new GitHubAPIError(response as ErrorData, res.status, request);
+		throw new GitHubAPIError(
+			(await parseResponse(res).catch(RequestHandler.onParseError(request))) as ErrorData,
+			res.status,
+			request
+		);
 	}
 }
 

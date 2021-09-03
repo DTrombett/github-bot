@@ -1,6 +1,5 @@
-import { is } from "superstruct";
+import { enums, is } from "superstruct";
 import type { APIRouter, RequestOptions } from "../../Util";
-import { sLowercaseRequestMethod } from "../../Util";
 import type { RESTManager } from "./RESTManager";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -19,7 +18,7 @@ export const buildRoute = (manager: RESTManager): APIRouter => {
 	const handler: ProxyHandler<APIRouter> = {
 		get(_, name) {
 			if (reflectors.includes(name) || typeof name === "symbol") return () => route.join("/");
-			if (is(name, sLowercaseRequestMethod))
+			if (is(name, enums(["delete", "get", "head", "patch", "post", "put"])))
 				return (options: RequestOptions = {}) =>
 					manager.request(name.toUpperCase() as Uppercase<typeof name>, route.join("/"), {
 						...options,

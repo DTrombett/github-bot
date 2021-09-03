@@ -2,16 +2,16 @@
 import { bold, SlashCommandBuilder } from "@discordjs/builders";
 import { exec } from "child_process";
 import type { Client } from "discord.js";
-import { is, type } from "superstruct";
-import { inspect, promisify } from "util";
+import { promisify } from "util";
 import type { CommandOptions } from "../Util";
-import { logError, logEval, logShell, sString } from "../Util";
+import { logEval, logShell } from "../Util";
 
-const sStd = type({ stdout: sString, stderr: sString });
 const shell = promisify(exec);
 const getMB = (memory: number) => bold(`${Math.round((memory / 1_024 / 1_024) * 1_000) / 1_000}mb`);
-const getError = (err: unknown) =>
-	is(err, sStd) ? { stderr: err.stderr, stdout: err.stdout } : { stdout: "", stderr: inspect(err) };
+const getError = (err: { stdout: string; stderr: string }) => ({
+	stderr: err.stderr,
+	stdout: err.stdout,
+});
 
 export const command: CommandOptions = {
 	data: new SlashCommandBuilder()
@@ -60,7 +60,7 @@ export const command: CommandOptions = {
 				content: "You're not allowed to run this command!",
 				ephemeral: true,
 			});
-		await interaction.deferReply({ ephemeral: true }).catch(logError);
+		await interaction.deferReply({ ephemeral: true });
 
 		let heapTotal: number,
 			heapUsed: number,
@@ -79,16 +79,16 @@ export const command: CommandOptions = {
 				} catch (err) {
 					result = err;
 				}
-				await logEval(
+				await logEval({
 					interaction,
 					result,
-					interaction.options.getBoolean("showhidden") ?? undefined,
-					interaction.options.getNumber("depth") ?? undefined
-				);
+					showHidden: interaction.options.getBoolean("showhidden") ?? undefined,
+					depth: interaction.options.getNumber("depth") ?? undefined,
+				});
 				break;
 			case "shell":
 				input = interaction.options.getString("command", true);
-				await logShell(interaction, input, await shell(input).catch(getError));
+				await logShell({ interaction, input, output: await shell(input).catch(getError) });
 				break;
 			case "ram":
 				({ heapUsed, heapTotal, rss } = process.memoryUsage());

@@ -2,14 +2,13 @@ import type { ClientOptions } from "discord.js";
 import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";
 import { join } from "path";
-import { assert } from "superstruct";
+import { assert, string } from "superstruct";
 import { inspect } from "util";
 import { GitHubClient } from "./gitHubClient";
 import {
 	ConsoleAndFileLogger,
 	FileLogger,
 	ProjectData,
-	sString,
 	interactionCreate,
 	loadCommands,
 	logError,
@@ -68,7 +67,7 @@ const options: ClientOptions = {
 	}),
 };
 
-assert(token, sString);
+assert(token, string());
 
 const client = new Client(options);
 const gitHubClient = new GitHubClient({ token, client });
@@ -85,7 +84,7 @@ client
 		);
 		process.send?.("ready");
 	})
-	.on(Events.INTERACTION_CREATE, interactionCreate)
+	.on(Events.INTERACTION_CREATE, interactionCreate.bind(gitHubClient))
 	.on(Events.DEBUG, (message) => void ConsoleAndFileLogger.info(message))
 	.on(Events.WARN, (warn) => {
 		ConsoleAndFileLogger.warn(warn);

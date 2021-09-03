@@ -27,9 +27,8 @@ export class Base {
 		return this;
 	}
 
-	// eslint-disable-next-line class-methods-use-this
 	fetch(): Promise<this> {
-		return Promise.reject(new Error("Method not implemented in the Base object"));
+		return Promise.reject(new Error(`Method not implemented in ${this.constructor.name} class`));
 	}
 }
 

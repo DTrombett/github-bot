@@ -1,6 +1,7 @@
 import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "@discordjs/builders";
 import type { Awaited, Client, CommandInteraction } from "discord.js";
 import type { Command } from ".";
+import type { APIRequest } from "../gitHubClient/rest/APIRequest";
 
 export type Json = Json[] | boolean | number | string | { [property: string]: Json } | null;
 
@@ -215,4 +216,11 @@ export type Log = {
 	 * @param message - The message to log
 	 */
 	[K in "debug" | "error" | "info" | "warn"]: (message: string) => Log;
+};
+
+export type HTTPErrorData = {
+	message: string;
+	name: string;
+	code?: number;
+	request: APIRequest;
 };

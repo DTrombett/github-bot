@@ -4,11 +4,11 @@
   "description": "A Discord bot that interacts with Github API.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "npx eslint src && npx tsc --noEmit",
+    "test": "eslint src && tsc --noEmit",
     "start": "npm run lint && npm run compile && node .",
     "build": "npm run lint && npm run compile",
-    "lint": "npx eslint src --fix",
-    "compile": "npx tsc",
+    "lint": "eslint src --fix",
+    "compile": "tsc",
     "commands": "node ./dist/registerCommands.js",
     "login": "node .",
     "pm2": "pm2 start dist/index.js --max-memory-restart 100M --exp-backoff-restart-delay=1000 --wait-ready --listen-timeout 10000 --shutdown-with-message"

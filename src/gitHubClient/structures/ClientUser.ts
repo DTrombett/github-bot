@@ -75,28 +75,20 @@ export class ClientUser extends User {
 
 	_patch(data: ClientUserData): this {
 		super._patch(data);
-		const {
-			private_gists,
-			total_private_repos,
-			owned_private_repos,
-			disk_usage,
-			collaborators,
-			two_factor_authentication,
-			plan,
-		} = data;
 
-		if (private_gists != null) this.privateGistsCount = private_gists;
-		if (total_private_repos != null) this.privateRepositoriesCount = total_private_repos;
-		if (owned_private_repos != null) this.ownedPrivateRepositoriesCount = owned_private_repos;
-		if (disk_usage != null) this.diskUsage = disk_usage;
-		if (collaborators != null) this.collaboratorsCount = collaborators;
-		if (two_factor_authentication != null) this.MFAEnabled = two_factor_authentication;
-		if (plan != null)
+		if (data.private_gists != null) this.privateGistsCount = data.private_gists;
+		if (data.total_private_repos != null) this.privateRepositoriesCount = data.total_private_repos;
+		if (data.owned_private_repos != null)
+			this.ownedPrivateRepositoriesCount = data.owned_private_repos;
+		if (data.disk_usage != null) this.diskUsage = data.disk_usage;
+		if (data.collaborators != null) this.collaboratorsCount = data.collaborators;
+		if (data.two_factor_authentication != null) this.MFAEnabled = data.two_factor_authentication;
+		if (data.plan != null)
 			this.plan = {
-				collaboratorsCount: plan.collaborators,
-				name: plan.name,
-				privateRepositoryCount: plan.private_repos,
-				space: plan.space,
+				collaboratorsCount: data.plan.collaborators,
+				name: data.plan.name,
+				privateRepositoryCount: data.plan.private_repos,
+				space: data.plan.space,
 			};
 
 		return this;

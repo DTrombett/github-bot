@@ -5,5 +5,4 @@ export * from "./showFollowers";
 export * from "./interactions";
 export * from "./logEval";
 export * from "./logShell";
-export * from "./superstruct";
-export * from "./Util";
+export * from "./UtilityTypes";

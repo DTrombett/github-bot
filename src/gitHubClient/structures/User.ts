@@ -167,51 +167,26 @@ export class User extends Base {
 	}
 
 	_patch(data: UserData): this {
-		super._patch(data);
-
-		const {
-			avatar_url,
-			gravatar_id,
-			html_url,
-			id,
-			login,
-			node_id,
-			type,
-			bio,
-			blog,
-			company,
-			created_at,
-			email,
-			followers,
-			following,
-			location,
-			name,
-			public_gists,
-			public_repos,
-			twitter_username,
-			updated_at,
-		} = data;
-
-		this.username = login;
-		if (node_id != null) this._nodeId = node_id;
-		if (id != null) this.id = id;
-		if (avatar_url != null) this.avatarUrl = avatar_url;
-		if (gravatar_id != null && gravatar_id !== "") this.gravatarId = gravatar_id;
-		if (html_url != null) this.url = html_url;
-		if (type != null) this.type = UserType[type];
-		if (name != null) this.name = name;
-		if (company != null) this.company = company;
-		if (blog != null && blog !== "") this.website = blog;
-		if (location != null) this.location = location;
-		if (email != null) this.email = email;
-		if (bio != null) this.bio = bio;
-		if (twitter_username != null) this.twitter = twitter_username;
-		if (public_repos != null) this.publicRepositoryCount = public_repos;
-		if (public_gists != null) this.publicGistsCount = public_gists;
-		if (followers != null) this.followersCount = followers;
-		if (following != null) this.followingCount = following;
-		if (created_at != null) this.createdAt = new Date(created_at);
-		if (updated_at != null) this.updatedAt = new Date(updated_at);
+		this.username = data.login;
+		if (data.node_id != null) this._nodeId = data.node_id;
+		if (data.id != null) this.id = data.id;
+		if (data.avatar_url != null) this.avatarUrl = data.avatar_url;
+		if (data.gravatar_id != null && data.gravatar_id !== "") this.gravatarId = data.gravatar_id;
+		if (data.html_url != null) this.url = data.html_url;
+		if (data.type != null) this.type = UserType[data.type];
+		if (data.name != null) this.name = data.name;
+		if (data.company != null) this.company = data.company;
+		if (data.blog != null && data.blog !== "") this.website = data.blog;
+		if (data.location != null) this.location = data.location;
+		if (data.email != null) this.email = data.email;
+		if (data.bio != null) this.bio = data.bio;
+		if (data.twitter_username != null) this.twitter = data.twitter_username;
+		if (data.public_repos != null) this.publicRepositoryCount = data.public_repos;
+		if (data.public_gists != null) this.publicGistsCount = data.public_gists;
+		if (data.followers != null) this.followersCount = data.followers;
+		if (data.following != null) this.followingCount = data.following;
+		if (data.created_at != null) this.createdAt = new Date(data.created_at);
+		if (data.updated_at != null) this.updatedAt = new Date(data.updated_at);
 
 		return this;
 	}

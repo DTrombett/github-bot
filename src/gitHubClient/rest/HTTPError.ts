@@ -1,28 +1,19 @@
-import { assert } from "superstruct";
-import { Numbers, sNumber, sString } from "../../Util";
-import type { APIRequest } from "./APIRequest";
+import type { HTTPErrorData } from "../../Util";
+import { Numbers } from "../../Util";
 
 export class HTTPError extends Error {
 	code: number;
 	method: string;
 	path: string;
 	requestData: unknown;
-	constructor(
-		message: string,
-		name: string,
-		code: number = Numbers.defaultStatusCode,
-		request: APIRequest
-	) {
-		super(message);
+	constructor(error: HTTPErrorData) {
+		super(error.message);
 
-		assert(name, sString);
-		assert(code, sNumber);
-
-		this.name = name;
-		this.code = code;
-		this.method = request.method;
-		this.path = request.path;
-		this.requestData = request.options.data;
+		this.name = error.name;
+		this.code = error.code ?? Numbers.defaultStatusCode;
+		this.method = error.request.method;
+		this.path = error.request.path;
+		this.requestData = error.request.options.data;
 	}
 }
 

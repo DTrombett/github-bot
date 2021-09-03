@@ -1,8 +1,7 @@
 import type Collection from "@discordjs/collection";
 import type { Client } from "discord.js";
-import { assert } from "superstruct";
 import type { APIRouter, ClientUserData, GitHubClientOptions } from "../Util";
-import { Numbers, ProjectData, sGitHubClientOptions } from "../Util";
+import { Numbers, ProjectData } from "../Util";
 import { UserManager } from "./managers/UserManager";
 import RESTManager from "./rest/RESTManager";
 import { ClientUser } from "./structures/ClientUser";
@@ -19,20 +18,12 @@ export class GitHubClient {
 	users = new UserManager(this);
 
 	constructor(options: GitHubClientOptions) {
-		assert(options, sGitHubClientOptions);
-
-		const {
-			token,
-			client,
-			timeZone = "Europe/Rome",
-			userAgent = `@${ProjectData.author}/${ProjectData.name}@${ProjectData.version}`,
-			requestTimeout = Numbers.defaultRequestTimeout,
-		} = options;
-		this.token = token;
-		this.timeZone = timeZone;
-		this.discordClient = client;
-		this.userAgent = userAgent;
-		this.requestTimeout = requestTimeout;
+		this.token = options.token;
+		this.timeZone = options.timeZone ?? "Europe/Rome";
+		this.discordClient = options.client;
+		this.userAgent =
+			options.userAgent ?? `@${ProjectData.author}/${ProjectData.name}@${ProjectData.version}`;
+		this.requestTimeout = options.requestTimeout ?? Numbers.defaultRequestTimeout;
 	}
 
 	get api(): APIRouter {

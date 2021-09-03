@@ -1,10 +1,10 @@
 import https from "https";
 import type { RequestInit, Response } from "node-fetch";
 import fetch from "node-fetch";
-import { assert, is } from "superstruct";
+import { is, string } from "superstruct";
 import { URLSearchParams } from "url";
 import type { RequestMethod, RequestOptions } from "../../Util";
-import { Numbers, sRequestMethod, sRequestOptions, sString } from "../../Util";
+import { Numbers } from "../../Util";
 import type { RESTManager } from "./RESTManager";
 
 const agent = new https.Agent({ keepAlive: true });
@@ -34,9 +34,6 @@ export class APIRequest {
 			retry = true,
 		}: RequestOptions = {}
 	) {
-		assert(method, sRequestMethod);
-		assert(path, sString);
-		assert({ acceptType, data, headers, query, requestTimeout, json }, sRequestOptions);
 		this.rest = rest;
 		this.path = path;
 		if (["diff", "patch", "sha", "base64"].includes(acceptType) && json)
@@ -72,7 +69,7 @@ export class APIRequest {
 		if (this.options.data != null) headers["Content-Type"] = "application/json";
 		if (etag != null) headers["If-None-Match"] = `"${etag}"`;
 		const { GITHUB_TOKEN: token } = process.env;
-		if (is(token, sString))
+		if (is(token, string()))
 			headers.Authorization = `Basic ${Buffer.from(`DTrombett:${token}`).toString("base64")}`;
 
 		const timeout = setTimeout(() => {
