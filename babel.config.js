@@ -1,3 +1,15 @@
+/** @type {import('@babel/core').TransformOptions} */
 module.exports = {
-	presets: [["@babel/preset-env", { targets: { node: "current" } }], "@babel/preset-typescript"],
+	parserOpts: { strictMode: true },
+	sourceMaps: true,
+	presets: [
+		[
+			"@babel/preset-env",
+			{
+				targets: { node: "current" },
+				modules: "commonjs",
+			},
+		],
+		"@babel/preset-typescript",
+	],
 };
