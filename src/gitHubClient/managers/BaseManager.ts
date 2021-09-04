@@ -1,15 +1,16 @@
 import { Collection } from "@discordjs/collection";
 import type { GitHubClient } from "..";
+import type { Json } from "../../Util";
 import type { Base } from "../structures/Base";
 
 export class BaseManager<
 	V extends Base,
-	D extends V["_patch"] extends (data: infer R) => V ? R : never = V["_patch"] extends (
-		data: infer R
+	D extends Json = Parameters<V["_patch"]>[0],
+	T extends new (client: GitHubClient, data: D, ...args: any[]) => V = new (
+		client: GitHubClient,
+		data: D,
+		...args: any[]
 	) => V
-		? R
-		: never,
-	T extends new (client: GitHubClient, data: D) => V = new (client: GitHubClient, data: D) => V
 > {
 	/**
 	 * The client that instantiated this
@@ -33,12 +34,12 @@ export class BaseManager<
 	async fetch(id: string): Promise<V> {
 		return (
 			this.cache.get(id)?.fetch() ??
-			this.add(
-				(await this.client
-					.api(...this.routers.map((route) => (route === ":id" ? id : route)))
-					.get<D>())!,
-				id
-			)
+			this.client
+				.api(...this.routers.map((route) => (route === ":id" ? id : route)))
+				.get<D, false>()
+				.then((data) =>
+					data != null ? this.add(data, id) : Promise.reject(new Error("Unexpected null response"))
+				)
 		);
 	}
 

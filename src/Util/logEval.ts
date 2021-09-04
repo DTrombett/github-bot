@@ -3,6 +3,7 @@ import type { APIMessage } from "discord-api-types/v9";
 import type { ButtonInteraction, CommandInteraction, Message } from "discord.js";
 import { MessageEmbed } from "discord.js";
 import { inspect } from "util";
+import { FileLogger } from ".";
 
 /**
  * Display the result of an eval expression.
@@ -16,19 +17,18 @@ export const logEval = (data: {
 	depth?: number;
 }): Promise<APIMessage | Message> => {
 	console.log(data.result);
+	const result = inspect(data.result, {
+		showHidden: data.showHidden,
+		depth: data.depth,
+		breakLength: 100,
+		showProxy: true,
+		sorted: true,
+	});
+	FileLogger.info(result);
 	return data.interaction.editReply({
 		embeds: [
 			new MessageEmbed({
-				description: codeBlock(
-					"js",
-					inspect(data.result, {
-						showHidden: data.showHidden,
-						depth: data.depth,
-						breakLength: 100,
-						showProxy: true,
-						sorted: true,
-					})
-				).slice(0, 4086),
+				description: codeBlock("js", result.slice(0, 4086)),
 			}),
 		],
 	});

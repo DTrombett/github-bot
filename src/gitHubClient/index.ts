@@ -35,7 +35,7 @@ export class GitHubClient {
 	 * @returns The fetched client user
 	 */
 	async login(): Promise<ClientUser> {
-		return this.api.user.get<ClientUserData>().then((user) => {
+		return this.api.user.get<ClientUserData, false>().then((user) => {
 			this.users.cache.set(user!.login, (this.user = new ClientUser(this, user!)));
 			return this.user;
 		});

@@ -1,4 +1,5 @@
 import type { GitHubClient } from "..";
+import type { Json } from "../../Util";
 
 export class Base {
 	/**
@@ -11,7 +12,7 @@ export class Base {
 	 */
 	lastUpdated: Date | null = new Date();
 
-	constructor(client: GitHubClient, data: unknown) {
+	constructor(client: GitHubClient, data: Json) {
 		Object.defineProperty(this, "client", { value: client });
 		this._patch(data);
 	}
@@ -23,7 +24,7 @@ export class Base {
 		return this.lastUpdated?.getTime() ?? null;
 	}
 
-	_patch(_data: unknown): this {
+	_patch(_data: Json): this {
 		return this;
 	}
 

@@ -1,7 +1,4 @@
 {
-  "ignorePatterns": [
-    "dist/"
-  ],
   "env": {
     "es2021": true,
     "node": true
@@ -106,7 +103,6 @@
     "no-new-func": "warn",
     "no-new-wrappers": "warn",
     "no-octal-escape": "warn",
-    "no-param-reassign": "warn",
     "no-promise-executor-return": "warn",
     "no-proto": "warn",
     "no-self-compare": "warn",

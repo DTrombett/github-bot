@@ -45,9 +45,9 @@ export type APIRouter = {
 	[key: string]: APIRouter;
 	(...routers: string[]): APIRouter;
 } & {
-		[K in Lowercase<RequestMethod>]: <T = unknown>(
-			options?: Omit<RequestOptions, K extends "delete" | "get" | "head" ? "data" : never>
-		) => Promise<T | null>;
+		[K in Lowercase<RequestMethod>]: <T extends Json = Json, N extends boolean = true>(
+			options?: Omit<RequestOptions, K extends "get" | "head" ? "data" : never>
+		) => Promise<T | (N extends false ? never : number) | null>;
 	};
 
 export type AcceptType =
@@ -62,7 +62,7 @@ export type AcceptType =
 	| "text";
 export type RequestOptions = {
 	headers?: Record<string, string>;
-	data?: Json;
+	data?: unknown;
 	query?: Record<string, string[] | string | null | undefined>;
 	requestTimeout?: number;
 	acceptType?: AcceptType;
@@ -169,7 +169,7 @@ export const enum Numbers {
 	serverErrorCode = 500,
 	rateLimitCode = 429,
 	unknownCode = 600,
-	notModifiedCode = 304,
+	multipleChoices = 300,
 	sweepInterval = 60_000,
 	resultsPerPage = 10,
 }
@@ -223,4 +223,26 @@ export type HTTPErrorData = {
 	name: string;
 	code?: number;
 	request: APIRequest;
+};
+
+export type EmailData = {
+	email: string;
+	verified?: boolean;
+	primary?: boolean;
+	visibility?: "private" | "public";
+};
+
+export enum EmailVisibility {
+	private,
+	public,
+}
+
+export type UserPatchData = {
+	username?: string;
+	email?: string;
+	website?: string;
+	twitter?: string | null;
+	company?: string;
+	location?: string;
+	bio?: string;
 };

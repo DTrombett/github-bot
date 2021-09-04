@@ -1,17 +1,11 @@
-import { writeFileSync } from "fs";
-import { join } from "path";
 import { createLogger, format, transports } from "winston";
 import type { Log } from ".";
-
-const filename = join(__dirname, "../../logs", `${Date.now()}.log`);
-
-writeFileSync(filename, "");
 
 /**
  * A logger to the console and the log file
  */
 export const ConsoleAndFileLogger: Log = createLogger({
-	transports: [new transports.Console(), new transports.File({ filename })],
+	transports: [new transports.Console(), new transports.File({ filename: "logs.log" })],
 	format: format.printf(
 		(logInfo) =>
 			`[${logInfo.level.toUpperCase()}] - ${logInfo.message} (${new Date().toLocaleString()})`
@@ -23,7 +17,7 @@ export const ConsoleAndFileLogger: Log = createLogger({
  * A logger to only the log file
  */
 export const FileLogger: Log = createLogger({
-	transports: new transports.File({ filename }),
+	transports: new transports.File({ filename: "logs.log" }),
 	level: "silly",
 });
 

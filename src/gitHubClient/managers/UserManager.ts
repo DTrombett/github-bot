@@ -21,3 +21,5 @@ export class UserManager extends BaseManager<User> {
 		return super.add(data, data.login);
 	}
 }
+
+export default UserManager;

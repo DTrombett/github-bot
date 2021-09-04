@@ -4,7 +4,7 @@
   "description": "A Discord bot that interacts with Github API.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "eslint src && tsc --noEmit",
+    "test": "jest",
     "start": "npm run lint && npm run compile && node .",
     "build": "npm run lint && npm run compile",
     "lint": "eslint src --fix",
@@ -16,14 +16,20 @@
   "author": "DTrombett",
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.15.5",
+    "@babel/preset-env": "^7.15.4",
+    "@babel/preset-typescript": "^7.15.0",
     "@tsconfig/node16": "^1.0.2",
+    "@types/jest": "^27.0.1",
     "@types/node": "^16.7.9",
     "@types/node-fetch": "^2.5.12",
     "@typescript-eslint/eslint-plugin": "^4.30.0",
     "@typescript-eslint/parser": "^4.30.0",
+    "babel-jest": "^27.1.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
+    "jest": "^27.1.0",
     "prettier": "^2.3.2"
   },
   "dependencies": {

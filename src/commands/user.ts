@@ -9,7 +9,7 @@ export const command: CommandOptions = {
 		.addSubcommand((sub) =>
 			sub
 				.setName("info")
-				.setDescription("Show general info about this user")
+				.setDescription("Show general info about a user")
 				.addStringOption((option) =>
 					option
 						.setName("username")

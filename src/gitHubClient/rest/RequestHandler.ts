@@ -1,5 +1,5 @@
 import { AsyncQueue } from "@sapphire/async-queue";
-import type { FetchError, Response } from "node-fetch";
+import type { FetchError } from "node-fetch";
 import { setTimeout } from "timers/promises";
 import type { ErrorData } from "../../Util";
 import { logError, Numbers } from "../../Util";
@@ -9,10 +9,6 @@ import { HTTPError } from "./HTTPError";
 import { RateLimitError } from "./RateLimitError";
 import type { RESTManager } from "./RESTManager";
 
-export const parseResponse = async <D>(res: Response): Promise<D> =>
-	(res.headers.get("content-type")?.startsWith("application/json") === true
-		? res.json()
-		: res.buffer()) as Promise<D>;
 export const calculateReset = (reset: string): number =>
 	new Date(Number(reset) * Numbers.milliseconds).getTime();
 
@@ -40,23 +36,12 @@ export class RequestHandler {
 			})
 		);
 	}
-	private static onParseError(request: APIRequest): (reason: FetchError) => never {
-		return (err: FetchError) => {
-			throw new HTTPError({
-				message: err.message,
-				name: err.constructor.name,
-				code: undefined,
-				request,
-			});
-		};
-	}
 	private static onFetchError(request: APIRequest) {
 		return (error: FetchError) =>
 			Promise.reject(
 				new HTTPError({
 					message: error.message,
 					name: error.constructor.name,
-					code: undefined,
 					request,
 				})
 			);
@@ -113,8 +98,8 @@ export class RequestHandler {
 			this.manager.globalRemaining = 0;
 			this.manager.globalReset = Date.now() + retryAfter;
 		}
-		if (res.ok) return parseResponse(res);
-		if (res.status === Numbers.notModifiedCode) return null;
+		if (res.ok) return res.json().catch(() => res.status) as Promise<D>;
+		if (res.status >= Numbers.multipleChoices && res.status < Numbers.badRequestCode) return null;
 		if (res.status >= Numbers.serverErrorCode && res.status < Numbers.unknownCode) {
 			if (request.options.retry) return this.execute(request);
 			throw new HTTPError({
@@ -132,7 +117,7 @@ export class RequestHandler {
 			);
 
 		throw new GitHubAPIError(
-			(await parseResponse(res).catch(RequestHandler.onParseError(request))) as ErrorData,
+			await (res.json() as Promise<ErrorData>).catch(() => ({ message: res.statusText })),
 			res.status,
 			request
 		);

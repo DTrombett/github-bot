@@ -19,6 +19,7 @@ export class User extends Base {
 	 * The avatar URL of this user
 	 */
 	avatarUrl: `https://avatars.githubusercontent.com/u/${string}?v=4` | null = null;
+
 	/**
 	 * The Gravatar id of this user, if any
 	 */
@@ -57,7 +58,7 @@ export class User extends Base {
 	/**
 	 * The email of this user shared in their profile, if any
 	 */
-	email: string | null = null;
+	publicEmail: string | null = null;
 
 	/**
 	 * The bio of this user shared in their profile, if any
@@ -85,6 +86,11 @@ export class User extends Base {
 	followersCount: number | null = null;
 
 	/**
+	 * A collection of users who are following this account
+	 */
+	followers = new Collection<string, User>();
+
+	/**
 	 * How many users is this account following
 	 */
 	followingCount: number | null = null;
@@ -98,11 +104,6 @@ export class User extends Base {
 	 * When this user was updated
 	 */
 	updatedAt: Date | null = null;
-
-	/**
-	 * A collection of the followers of this user
-	 */
-	followers = new Collection<string, User>();
 
 	protected _nodeId: string | null = null;
 
@@ -145,8 +146,17 @@ export class User extends Base {
 	 */
 	fetch(): Promise<this> {
 		return this.client.api.users[this.username]
-			.get<UserData>()
+			.get<UserData, false>()
 			.then((response) => (response ? this._patch(response) : this));
+	}
+
+	//#region Followers
+
+	/**
+	 * A collection of people this user is following
+	 */
+	get following(): Collection<string, User> {
+		return this.client.users.cache.filter((user) => user.followers.has(this.username));
 	}
 
 	/**
@@ -155,16 +165,20 @@ export class User extends Base {
 	 * @param page - Number of the page to fetch
 	 * @returns A collection of users who follow this account
 	 */
-	fetchFollowers(perPage = Numbers.resultsPerPage, page = 1): Promise<Collection<string, User>> {
+	fetchFollowers(perPage = Numbers.resultsPerPage, page = 1): Promise<this["followers"]> {
 		return this.client.api
 			.users(this.username)
-			.followers.get<UserData[]>({ query: { per_page: perPage.toString(), page: page.toString() } })
+			.followers.get<UserData[], false>({
+				query: { per_page: perPage.toString(), page: page.toString() },
+			})
 			.then((followers) => {
 				if (followers)
 					for (const user of followers) this.followers.set(user.login, this.client.users.add(user));
 				return this.followers;
 			});
 	}
+
+	//#endregion
 
 	_patch(data: UserData): this {
 		this.username = data.login;
@@ -178,7 +192,7 @@ export class User extends Base {
 		if (data.company != null) this.company = data.company;
 		if (data.blog != null && data.blog !== "") this.website = data.blog;
 		if (data.location != null) this.location = data.location;
-		if (data.email != null) this.email = data.email;
+		if (data.email != null) this.publicEmail = data.email;
 		if (data.bio != null) this.bio = data.bio;
 		if (data.twitter_username != null) this.twitter = data.twitter_username;
 		if (data.public_repos != null) this.publicRepositoryCount = data.public_repos;
