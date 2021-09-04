@@ -4,7 +4,7 @@
   "description": "A Discord bot that interacts with Github API.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --coverage --noStackTrace --verbose",
     "start": "npm run lint && npm run compile && node .",
     "build": "npm run lint && npm run compile",
     "lint": "eslint src --fix",
