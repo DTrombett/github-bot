@@ -13,3 +13,6 @@ jobs:
 
       - name: Run Jest
         run: npm run test
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v1
