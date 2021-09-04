@@ -8,8 +8,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install required dependencies
+        run: npm i -D jest babel-jest @types/jest @babel/preset-typescript @babel/preset-env @babel/core typescript
 
       - name: Run Jest
         run: npm run test
