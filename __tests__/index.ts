@@ -65,8 +65,6 @@ export const testCommandInteractionData = (
 		type: 0,
 	},
 	user: testAPIUser,
-	guild_id: testId,
-	member: testAPIGuildMember,
 	...data,
 });
 export const testButtonInteractionData = (
