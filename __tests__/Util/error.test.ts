@@ -7,6 +7,6 @@ test("log an error", () => {
 });
 
 test("get an error message", () => {
-	expect(errorMessage(testError)).toBe("An error occurred");
+	expect(errorMessage(testError)).toBe("test");
 	expect(errorMessage("Not an error")).toBe("Unknown error");
 });
