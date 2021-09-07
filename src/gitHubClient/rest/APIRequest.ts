@@ -69,12 +69,17 @@ export class APIRequest {
 		if (this.options.data != null) headers["Content-Type"] = "application/json";
 		if (etag != null) headers["If-None-Match"] = `"${etag}"`;
 		const { GITHUB_TOKEN: token } = process.env;
+		/* istanbul ignore next */
 		if (is(token, string()))
 			headers.Authorization = `Basic ${Buffer.from(`DTrombett:${token}`).toString("base64")}`;
 
-		const timeout = setTimeout(() => {
-			controller.abort();
-		}, this.options.requestTimeout).unref();
+		const timeout = setTimeout(
+			/* istanbul ignore next */
+			() => {
+				controller.abort();
+			},
+			this.options.requestTimeout
+		).unref();
 		return fetch(this.url, {
 			method: this.method,
 			headers,
