@@ -1,17 +1,50 @@
-import { ButtonInteraction, CommandInteraction, Constants, Interaction } from "discord.js";
+import { ButtonInteraction, CommandInteraction, Interaction } from "discord.js";
 import { Command, commands, interactionCreate, loadCommands } from "../../src/Util/interactions";
 import { command } from "../../src/commands/dev";
 import { ButtonId } from "../../src/Util";
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { ClientUser } from "../../src/gitHubClient/structures/ClientUser";
 import {
 	testClient,
 	testCommand,
 	testDiscordClient,
 	testCommandInteractionData,
-	testUser,
 	testButtonInteractionData,
-} from "./Util";
+	testId,
+	testAPIGuildMember,
+} from "..";
+
+const testInteraction = Interaction.prototype;
+const testCommandInteraction = new CommandInteraction(
+	testDiscordClient,
+	testCommandInteractionData({ data: { name: "dev", id: testId } })
+);
+const testCommandInteractionUnexistent = new CommandInteraction(
+	testDiscordClient,
+	testCommandInteractionData()
+);
+const testCommandInteractionUnexistentDeferred = new CommandInteraction(
+	testDiscordClient,
+	testCommandInteractionData()
+);
+const testCommandInteractionInGuild = new CommandInteraction(
+	testDiscordClient,
+	testCommandInteractionData({
+		member: testAPIGuildMember,
+		guild_id: testId,
+		data: { id: testId, name: "dev" },
+	})
+);
+const testButtonInteractionUser = new ButtonInteraction(
+	testDiscordClient,
+	testButtonInteractionData(`${ButtonId.user}-DTrombett`)
+);
+const testButtonInteractionFollowers = new ButtonInteraction(
+	testDiscordClient,
+	testButtonInteractionData(`${ButtonId.followers}-DTrombett`)
+);
+const testButtonInteraction = new ButtonInteraction(testDiscordClient, testButtonInteractionData());
+
+testCommandInteractionUnexistentDeferred.deferred = true;
 
 test("test Command class", async () => {
 	// Test properties
@@ -80,47 +113,6 @@ test("test interactionCreate event", async () => {
 	>;
 	await loadCommands(testClient).then((cmds) => expect(cmds.size).toBeGreaterThanOrEqual(1));
 	commands.get("dev")!.callback = () => {};
-	const testInteraction = Interaction.prototype;
-	const testCommandInteraction = new CommandInteraction(
-		testDiscordClient,
-		testCommandInteractionData()
-	);
-	const testCommandInteractionUnexistent = new CommandInteraction(
-		testDiscordClient,
-		testCommandInteractionData({ name: "unexistent-command" })
-	);
-	const testCommandInteractionUnexistentDeferred = new CommandInteraction(
-		testDiscordClient,
-		testCommandInteractionData({ name: "unexistent-command" })
-	);
-	const testCommandInteractionInGuild = new CommandInteraction(
-		testDiscordClient,
-		testCommandInteractionData({
-			member: {
-				deaf: false,
-				joined_at: "1970-01-01T00:00:00.000Z",
-				mute: false,
-				permissions: "0",
-				roles: [],
-				user: testUser,
-			},
-			guild_id: "123456789012345678",
-		})
-	);
-	const testButtonInteractionUser = new ButtonInteraction(
-		testDiscordClient,
-		testButtonInteractionData(`${ButtonId.user}-DTrombett`)
-	);
-	const testButtonInteractionFollowers = new ButtonInteraction(
-		testDiscordClient,
-		testButtonInteractionData(`${ButtonId.followers}-DTrombett`)
-	);
-	const testButtonInteraction = new ButtonInteraction(
-		testDiscordClient,
-		testButtonInteractionData()
-	);
-
-	testCommandInteractionUnexistentDeferred.deferred = true;
 
 	await Promise.all([
 		interactionEvent(testInteraction),
