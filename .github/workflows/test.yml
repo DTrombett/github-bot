@@ -9,13 +9,12 @@ jobs:
         uses: actions/setup-node@v2.4.0
         with:
           node-version: "16.x"
-          check-latest: true
 
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install required dependencies
-        run: npm i jest babel-jest @types/jest @types/babel__core @babel/preset-typescript @babel/preset-env @babel/core typescript --save-dev
+      - name: Install all dependencies
+        run: npm ci
 
       - name: Run Jest
         run: npm run test:ci
