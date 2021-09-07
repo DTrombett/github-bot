@@ -84,7 +84,7 @@ export type CommandOptions = {
 		| SlashCommandBuilder
 		| SlashCommandSubcommandsOnlyBuilder;
 	run: (this: Command, interaction: CommandInteraction) => Awaited<void>;
-	ownerOnly?: boolean;
+	ownerOnly?: true;
 };
 
 export enum UserType {

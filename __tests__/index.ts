@@ -1,18 +1,20 @@
 import { Client } from "discord.js";
-import { GitHubClient } from "../../src/gitHubClient";
-import { Command } from "../../src/Util/interactions";
-import { command } from "../../src/commands/dev";
+import { GitHubClient } from "../src/gitHubClient";
+import { Command } from "../src/Util/interactions";
+import { command } from "../src/commands/dev";
 import {
 	APIApplicationCommandInteraction,
-	APIInteractionGuildMember,
 	APIMessage,
 	APIMessageButtonInteractionData,
 	APIMessageComponentInteraction,
-	APIUser,
 	ComponentType,
 	InteractionType,
 } from "discord-api-types/v9";
-import { ClientUser } from "../../src/gitHubClient/structures/ClientUser";
+import { ClientUser } from "../src/gitHubClient/structures/ClientUser";
+
+export type RecursivePartial<T> = {
+	[K in keyof T]?: RecursivePartial<T[K]>;
+};
 
 export const testIntents = 0;
 export const testUsername = "DTrombett";
@@ -23,48 +25,37 @@ export const testToken = "abcdefghijklmnopqrstuvwxyz";
 export const testTimestamp = "1970-01-01T00:00:00.000Z";
 export const testCustomId = "test";
 export const testNoop = () => {};
+export const testError = new Error("test");
 export const testDiscordClient = new Client({ intents: testIntents });
 export const testClient = new GitHubClient({ client: testDiscordClient });
 export const testCommand = new Command({ ...command, run: testNoop }, testClient);
-export const testUser = {
+export const testAPIUser = {
 	avatar: null,
 	discriminator: testDiscriminator,
 	id: testId,
 	username: testUsername,
 };
-export const testCommandInteractionData = ({
-	name = testCommandName,
-	user = testUser,
-	guild_id,
-	member,
-	id = testId,
-	token = testToken,
-}: {
-	name?: string;
-	user?: APIUser;
-	guild_id?: string;
-	member?: APIInteractionGuildMember;
-	id?: string;
-	token?: string;
-} = {}): APIApplicationCommandInteraction & { message: APIMessage } => ({
-	id,
-	application_id: id,
+export const testCommandInteractionData = (
+	data: Partial<APIApplicationCommandInteraction> = {}
+): APIApplicationCommandInteraction & { message: APIMessage } => ({
+	id: testId,
+	application_id: testId,
 	type: InteractionType.ApplicationCommand,
-	token,
+	token: testToken,
 	version: 1,
 	data: {
-		id,
-		name,
+		id: testId,
+		name: "test",
 	},
-	channel_id: id,
+	channel_id: testId,
 	message: {
 		attachments: [],
-		author: user,
-		channel_id: id,
+		author: testAPIUser,
+		channel_id: testId,
 		content: "",
 		edited_timestamp: null,
 		embeds: [],
-		id,
+		id: testId,
 		mention_everyone: false,
 		mention_roles: [],
 		mentions: [],
@@ -73,9 +64,8 @@ export const testCommandInteractionData = ({
 		tts: false,
 		type: 0,
 	},
-	user,
-	guild_id,
-	member,
+	user: testAPIUser,
+	...data,
 });
 export const testButtonInteractionData = (
 	custom_id = testCustomId
@@ -88,5 +78,13 @@ export const testButtonInteractionData = (
 	component_type: ComponentType.Button,
 	type: InteractionType.MessageComponent,
 });
+export const testAPIGuildMember = {
+	deaf: false,
+	joined_at: testTimestamp,
+	mute: false,
+	permissions: "0",
+	roles: [],
+	user: testAPIUser,
+};
 
 testClient.user = new ClientUser(testClient, { login: testUsername });

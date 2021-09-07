@@ -8,5 +8,5 @@ module.exports = {
 	coverageDirectory: "coverage",
 	coverageProvider: "babel",
 	coverageReporters: ["text", "lcov", "clover"],
-	coveragePathIgnorePatterns: ["src/*.ts"],
+	coveragePathIgnorePatterns: ["src/*.ts", "src/commands/*.ts"],
 };

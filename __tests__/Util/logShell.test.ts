@@ -1,6 +1,6 @@
 import { logShell } from "../../src/Util/logShell";
 import { ButtonInteraction, CommandInteraction } from "discord.js";
-import { testButtonInteractionData, testCommandInteractionData, testDiscordClient } from "./Util";
+import { testButtonInteractionData, testCommandInteractionData, testDiscordClient } from "..";
 
 test("log the result of a shell command", async () => {
 	await logShell({

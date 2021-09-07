@@ -7,9 +7,8 @@ import {
 	testDiscordClient,
 	testTimestamp,
 	testUsername,
-} from "./Util";
+} from "..";
 import User from "../../src/gitHubClient/structures/User";
-import { UserType } from "../../src/Util";
 
 test("show user info", async () => {
 	await userInfo({

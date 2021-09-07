@@ -6,14 +6,14 @@ import {
 	testCommandInteractionData,
 	testDiscordClient,
 	testUsername,
-} from "./Util";
+} from "..";
 import User from "../../src/gitHubClient/structures/User";
 
 test("show user followers", async () => {
 	await showFollowers({
 		interaction: new CommandInteraction(testDiscordClient, testCommandInteractionData()),
 		username: testUsername,
-		followers: "Unknown error",
+		followers: "test",
 	}).catch((err) => expect(err instanceof Error).toBe(true));
 	await showFollowers({
 		interaction: new CommandInteraction(testDiscordClient, testCommandInteractionData()),
