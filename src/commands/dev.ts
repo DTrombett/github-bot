@@ -55,7 +55,7 @@ export const command: CommandOptions = {
 		),
 
 	async run(interaction) {
-		if (interaction.user.id !== interaction.client.application?.owner?.id)
+		if (interaction.user.id !== interaction.client.application!.owner?.id)
 			return void interaction.reply({
 				content: "You're not allowed to run this command!",
 				ephemeral: true,
