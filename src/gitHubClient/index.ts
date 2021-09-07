@@ -8,7 +8,7 @@ import { ClientUser } from "./structures/ClientUser";
 import type User from "./structures/User";
 
 export class GitHubClient {
-	token: string;
+	token?: string;
 	timeZone: string;
 	discordClient: Client;
 	userAgent: string;

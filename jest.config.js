@@ -6,14 +6,7 @@ module.exports = {
 	collectCoverage: true,
 	collectCoverageFrom: ["src/**/*.ts"],
 	coverageDirectory: "coverage",
-	coverageProvider: "v8",
+	coverageProvider: "babel",
 	coverageReporters: ["text", "lcov", "clover"],
-	coverageThreshold: {
-		global: {
-			branches: 70,
-			lines: 70,
-			statements: 70,
-		},
-	},
-	coveragePathIgnorePatterns: ["src/index.ts"],
+	coveragePathIgnorePatterns: ["src/*.ts"],
 };

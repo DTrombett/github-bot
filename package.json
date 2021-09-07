@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "jest --coverage --noStackTrace --verbose",
+    "test:ci": "jest --coverage --noStackTrace --verbose --ci",
     "start": "npm run lint && npm run compile && node .",
     "build": "npm run lint && npm run compile",
     "lint": "eslint src --fix",

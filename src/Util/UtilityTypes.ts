@@ -24,7 +24,7 @@ export const enum IntentsFlags {
 }
 
 export type GitHubClientOptions = {
-	token: string;
+	token?: string;
 	client: Client;
 	timeZone?: string;
 	userAgent?: string;

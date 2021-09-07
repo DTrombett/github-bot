@@ -92,7 +92,7 @@ export class Command {
 	 * @returns The new command
 	 */
 	async reload(): Promise<this> {
-		const path = join(__dirname, "../commands", this.data.name);
+		const path = join(__dirname, "../commands", this.name);
 		delete require.cache[require.resolve(path)];
 		this.resolveProperties(((await import(path)) as { command: CommandOptions }).command);
 		return this;
@@ -182,7 +182,10 @@ export const loadCommands = (client: GitHubClient): Promise<typeof commands> =>
 		.then((files) =>
 			Promise.all(
 				files
-					.filter((file): file is `${string}.js` => file.endsWith(".js"))
+					.filter(
+						(file): file is `${string}.${"j" | "t"}s` =>
+							file.endsWith(".js") || file.endsWith(".ts")
+					)
 					.map(
 						(file) =>
 							import(join(__dirname, "../commands", file)) as Promise<{ command: CommandOptions }>
