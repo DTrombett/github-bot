@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install required dependencies
-        run: npm i -D jest babel-jest @types/jest @types/babel__core @babel/preset-typescript @babel/preset-env @babel/core typescript
+        run: npm i jest babel-jest @types/jest @types/babel__core @babel/preset-typescript @babel/preset-env @babel/core typescript --save-dev
 
       - name: Run Jest
         run: npm run test:ci
