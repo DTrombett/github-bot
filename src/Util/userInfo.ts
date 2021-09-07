@@ -51,7 +51,7 @@ export const userInfo = (data: {
 		.setURL(data.user.url)
 		.setTitle(`User info for ${data.user.displayName}`)
 		.setFooter("Last update", data.user.client.user.avatarUrl ?? undefined)
-		.setTimestamp(data.user.lastUpdatedTimestamp ?? Date.now())
+		.setTimestamp(data.user.lastUpdatedTimestamp)
 		.setDescription(description.join("\n"))
 		.setColor(([null, "RED", "BLUE"] as const)[data.user.type]);
 	if (data.user.avatarUrl != null) embed.setThumbnail(data.user.avatarUrl);

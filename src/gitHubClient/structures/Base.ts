@@ -10,7 +10,7 @@ export class Base {
 	/**
 	 * When this was last fetched
 	 */
-	lastUpdated: Date | null = new Date();
+	lastUpdated: Date = new Date();
 
 	constructor(client: GitHubClient, data: Json) {
 		Object.defineProperty(this, "client", { value: client });
@@ -20,8 +20,8 @@ export class Base {
 	/**
 	 * The timestamp in milliseconds when this was last fetched
 	 */
-	get lastUpdatedTimestamp(): number | null {
-		return this.lastUpdated?.getTime() ?? null;
+	get lastUpdatedTimestamp(): number {
+		return this.lastUpdated.getTime();
 	}
 
 	_patch(_data: Json): this {
