@@ -16,6 +16,7 @@ import { APIRequest } from "../src/gitHubClient/rest/APIRequest";
 import { GitHubAPIError } from "../src/gitHubClient/rest/GitHubAPIError";
 import { HTTPError } from "../src/gitHubClient/rest/HTTPError";
 import { RateLimitError } from "../src/gitHubClient/rest/RateLimitError";
+import { RequestHandler } from "../src/gitHubClient/rest/RequestHandler";
 
 export type RecursivePartial<T> = {
 	[K in keyof T]?: RecursivePartial<T[K]>;
@@ -35,6 +36,7 @@ export const testDiscordClient = new Client({ intents: testIntents });
 export const testClient = new GitHubClient({ client: testDiscordClient });
 export const testRestManager = new RESTManager(testClient);
 export const testAPIRequest = new APIRequest(testRestManager, "GET", "/user");
+export const testValidAPIRequest = new APIRequest(testRestManager, "GET", "/users/DTrombett");
 export const testGitHubAPIError = new GitHubAPIError(
 	{
 		message: "An error occurred",
@@ -71,6 +73,7 @@ export const testRateLimitError = new RateLimitError({
 	path: "/user",
 	timeout: 60_000,
 });
+export const testRequestHandler = new RequestHandler(testRestManager);
 export const testCommand = new Command({ ...command, run: testNoop }, testClient);
 export const testAPIUser = {
 	avatar: null,
