@@ -1,5 +1,4 @@
 import { testRestManager } from "../..";
-import { Numbers } from "../../../src/Util";
 
 jest.useFakeTimers();
 

@@ -15,6 +15,7 @@ import { RESTManager } from "../src/gitHubClient/rest/RESTManager";
 import { APIRequest } from "../src/gitHubClient/rest/APIRequest";
 import { GitHubAPIError } from "../src/gitHubClient/rest/GitHubAPIError";
 import { HTTPError } from "../src/gitHubClient/rest/HTTPError";
+import { RateLimitError } from "../src/gitHubClient/rest/RateLimitError";
 
 export type RecursivePartial<T> = {
 	[K in keyof T]?: RecursivePartial<T[K]>;
@@ -63,6 +64,12 @@ export const testHTTPError = new HTTPError({
 	name: "FetchError",
 	request: testAPIRequest,
 	code: 501,
+});
+export const testRateLimitError = new RateLimitError({
+	limit: 5_000,
+	method: "GET",
+	path: "/user",
+	timeout: 60_000,
 });
 export const testCommand = new Command({ ...command, run: testNoop }, testClient);
 export const testAPIUser = {
