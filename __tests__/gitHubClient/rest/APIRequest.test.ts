@@ -1,9 +1,10 @@
-import { testRestManager } from "../..";
+import { testAPIRequest, testRestManager } from "../..";
 import { APIRequest } from "../../../src/gitHubClient/rest/APIRequest";
 import { Numbers, UserData } from "../../../src/Util/UtilityTypes";
+
 test("test the APIRequest class", async () => {
 	// Test a request with no options
-	expect(new APIRequest(testRestManager, "GET", "")).toBeInstanceOf(APIRequest);
+	expect(testAPIRequest).toBeInstanceOf(APIRequest);
 
 	// Test a request with an empty object
 	expect(new APIRequest(testRestManager, "GET", "", {})).toBeInstanceOf(APIRequest);
@@ -36,7 +37,6 @@ test("test the APIRequest class", async () => {
 	).toBe("application/vnd.github.v3.text+json");
 
 	// Test properties
-	const testAPIRequest = new APIRequest(testRestManager, "GET", "/user");
 	expect(testAPIRequest.method).toBe("GET");
 	expect(testAPIRequest.rest).toBe(testRestManager);
 	expect(testAPIRequest.path).toBe("/user");

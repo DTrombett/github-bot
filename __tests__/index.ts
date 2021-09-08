@@ -12,6 +12,8 @@ import {
 } from "discord-api-types/v9";
 import { ClientUser } from "../src/gitHubClient/structures/ClientUser";
 import { RESTManager } from "../src/gitHubClient/rest/RESTManager";
+import { APIRequest } from "../src/gitHubClient/rest/APIRequest";
+import { GitHubAPIError } from "../src/gitHubClient/rest/GitHubAPIError";
 
 export type RecursivePartial<T> = {
 	[K in keyof T]?: RecursivePartial<T[K]>;
@@ -30,6 +32,31 @@ export const testError = new Error("test");
 export const testDiscordClient = new Client({ intents: testIntents });
 export const testClient = new GitHubClient({ client: testDiscordClient });
 export const testRestManager = new RESTManager(testClient);
+export const testAPIRequest = new APIRequest(testRestManager, "GET", "/user");
+export const testGitHubAPIError = new GitHubAPIError(
+	{
+		message: "An error occurred",
+		documentation_url: "https://docs.github.com/en/rest/reference/users#get-the-authenticated-user",
+		errors: [
+			{ code: "already_exists", field: "name", resource: "User" },
+			{
+				code: "custom",
+				field: "name",
+				message: "This name is invalid",
+				resource: "User",
+				documentation_url: "https://docs.github.com/en/github/site-policy/github-username-policy",
+			},
+			{
+				code: "custom",
+				field: "name",
+				message: "This name is bad",
+				resource: "User",
+			},
+		],
+	},
+	400,
+	testAPIRequest
+);
 export const testCommand = new Command({ ...command, run: testNoop }, testClient);
 export const testAPIUser = {
 	avatar: null,
