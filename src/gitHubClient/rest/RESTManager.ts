@@ -20,9 +20,11 @@ export class RESTManager {
 		this.globalRemaining = this.globalLimit;
 		this.globalReset = null;
 		this.globalDelay = null;
-		setInterval(() => {
-			this.handlers.sweep((handler) => handler._inactive);
-		}, Numbers.sweepInterval).unref();
+		setInterval(
+			/* istanbul ignore next */
+			() => this.handlers.sweep((handler) => handler._inactive),
+			Numbers.sweepInterval
+		).unref();
 	}
 
 	get api(): APIRouter {
