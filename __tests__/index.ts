@@ -14,6 +14,7 @@ import { ClientUser } from "../src/gitHubClient/structures/ClientUser";
 import { RESTManager } from "../src/gitHubClient/rest/RESTManager";
 import { APIRequest } from "../src/gitHubClient/rest/APIRequest";
 import { GitHubAPIError } from "../src/gitHubClient/rest/GitHubAPIError";
+import { HTTPError } from "../src/gitHubClient/rest/HTTPError";
 
 export type RecursivePartial<T> = {
 	[K in keyof T]?: RecursivePartial<T[K]>;
@@ -57,6 +58,12 @@ export const testGitHubAPIError = new GitHubAPIError(
 	400,
 	testAPIRequest
 );
+export const testHTTPError = new HTTPError({
+	message: "test",
+	name: "FetchError",
+	request: testAPIRequest,
+	code: 501,
+});
 export const testCommand = new Command({ ...command, run: testNoop }, testClient);
 export const testAPIUser = {
 	avatar: null,
