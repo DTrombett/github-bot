@@ -1,8 +1,6 @@
-import { testClient } from "../..";
+import { testRestManager } from "../..";
 import { APIRequest } from "../../../src/gitHubClient/rest/APIRequest";
-import RESTManager from "../../../src/gitHubClient/rest/RESTManager";
 import { Numbers, UserData } from "../../../src/Util/UtilityTypes";
-const testRestManager = new RESTManager(testClient);
 test("test the APIRequest class", async () => {
 	// Test a request with no options
 	expect(new APIRequest(testRestManager, "GET", "")).toBeInstanceOf(APIRequest);

@@ -2,8 +2,8 @@ import { enums, is } from "superstruct";
 import type { APIRouter, RequestOptions } from "../../Util";
 import type { RESTManager } from "./RESTManager";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const empty = (() => {}) as APIRouter;
+/* istanbul ignore next */
+const empty = (() => {}) as APIRouter; // eslint-disable-line @typescript-eslint/no-empty-function
 const reflectors = [
 	"toString",
 	"valueOf",

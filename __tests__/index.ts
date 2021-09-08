@@ -11,6 +11,7 @@ import {
 	InteractionType,
 } from "discord-api-types/v9";
 import { ClientUser } from "../src/gitHubClient/structures/ClientUser";
+import { RESTManager } from "../src/gitHubClient/rest/RESTManager";
 
 export type RecursivePartial<T> = {
 	[K in keyof T]?: RecursivePartial<T[K]>;
@@ -28,6 +29,7 @@ export const testNoop = () => {};
 export const testError = new Error("test");
 export const testDiscordClient = new Client({ intents: testIntents });
 export const testClient = new GitHubClient({ client: testDiscordClient });
+export const testRestManager = new RESTManager(testClient);
 export const testCommand = new Command({ ...command, run: testNoop }, testClient);
 export const testAPIUser = {
 	avatar: null,
