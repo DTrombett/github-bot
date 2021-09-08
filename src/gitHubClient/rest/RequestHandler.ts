@@ -73,9 +73,7 @@ export class RequestHandler {
 	async execute<D>(request: APIRequest): Promise<D | null> {
 		if (this.limited)
 			this.manager.globalDelay ??= this.globalDelayFor(
-				this.manager.globalReset != null
-					? this.manager.globalReset + Numbers.milliseconds - Date.now()
-					: 0
+				this.manager.globalReset! + Numbers.milliseconds - Date.now()
 			);
 		await this.manager.globalDelay;
 		if (this.manager.globalReset == null || this.manager.globalReset < Date.now()) {
@@ -84,22 +82,27 @@ export class RequestHandler {
 		}
 		this.manager.globalRemaining--;
 		const res = await request.make().catch(RequestHandler.onFetchError(request));
-		const limit = res.headers.get("x-ratelimit-limit");
-		const remaining = res.headers.get("x-ratelimit-remaining");
-		const reset = res.headers.get("x-ratelimit-reset");
+		const limit = res.headers.get("x-ratelimit-limit")!;
+		const remaining = res.headers.get("x-ratelimit-remaining")!;
+		const reset = res.headers.get("x-ratelimit-reset")!;
 
-		this.limit = limit != null ? Number(limit) : Infinity;
-		this.remaining = remaining != null ? Number(remaining) : 1;
-		this.reset = reset != null ? calculateReset(reset) : Date.now();
+		this.limit = Number(limit);
+		this.remaining = Number(remaining);
+		this.reset = calculateReset(reset);
 
-		const retryAfter = !this.remaining ? this.reset * Numbers.milliseconds - Date.now() : 0;
+		const retryAfter = !this.remaining
+			? /* istanbul ignore next */
+			  this.reset * Numbers.milliseconds - Date.now()
+			: 0;
 
+		/* istanbul ignore next */
 		if (retryAfter > 0) {
 			this.manager.globalRemaining = 0;
 			this.manager.globalReset = Date.now() + retryAfter;
 		}
 		if (res.ok) return res.json().catch(() => res.status) as Promise<D>;
 		if (res.status >= Numbers.multipleChoices && res.status < Numbers.badRequestCode) return null;
+		/* istanbul ignore next */
 		if (res.status >= Numbers.serverErrorCode && res.status < Numbers.unknownCode) {
 			if (request.options.retry) return this.execute(request);
 			throw new HTTPError({
@@ -109,6 +112,7 @@ export class RequestHandler {
 				request,
 			});
 		}
+		/* istanbul ignore next */
 		if (res.status === Numbers.rateLimitCode)
 			RequestHandler.onRateLimit(
 				request,

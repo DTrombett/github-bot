@@ -14,7 +14,10 @@ export class GitHubAPIError extends Error {
 	constructor(error: ErrorData, status: number, request: APIRequest) {
 		super();
 
-		this.message = [error.message]
+		this.message = [
+			error.message +
+				(error.documentation_url != null ? `\nDocumentation: ${error.documentation_url}` : ""),
+		]
 			.concat(
 				error.errors?.map(
 					(err) =>

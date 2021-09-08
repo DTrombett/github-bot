@@ -11,6 +11,12 @@ import {
 	InteractionType,
 } from "discord-api-types/v9";
 import { ClientUser } from "../src/gitHubClient/structures/ClientUser";
+import { RESTManager } from "../src/gitHubClient/rest/RESTManager";
+import { APIRequest } from "../src/gitHubClient/rest/APIRequest";
+import { GitHubAPIError } from "../src/gitHubClient/rest/GitHubAPIError";
+import { HTTPError } from "../src/gitHubClient/rest/HTTPError";
+import { RateLimitError } from "../src/gitHubClient/rest/RateLimitError";
+import { RequestHandler } from "../src/gitHubClient/rest/RequestHandler";
 
 export type RecursivePartial<T> = {
 	[K in keyof T]?: RecursivePartial<T[K]>;
@@ -28,6 +34,46 @@ export const testNoop = () => {};
 export const testError = new Error("test");
 export const testDiscordClient = new Client({ intents: testIntents });
 export const testClient = new GitHubClient({ client: testDiscordClient });
+export const testRestManager = new RESTManager(testClient);
+export const testAPIRequest = new APIRequest(testRestManager, "GET", "/user");
+export const testValidAPIRequest = new APIRequest(testRestManager, "GET", "/users/DTrombett");
+export const testGitHubAPIError = new GitHubAPIError(
+	{
+		message: "An error occurred",
+		documentation_url: "https://docs.github.com/en/rest/reference/users#get-the-authenticated-user",
+		errors: [
+			{ code: "already_exists", field: "name", resource: "User" },
+			{
+				code: "custom",
+				field: "name",
+				message: "This name is invalid",
+				resource: "User",
+				documentation_url: "https://docs.github.com/en/github/site-policy/github-username-policy",
+			},
+			{
+				code: "custom",
+				field: "name",
+				message: "This name is bad",
+				resource: "User",
+			},
+		],
+	},
+	400,
+	testAPIRequest
+);
+export const testHTTPError = new HTTPError({
+	message: "test",
+	name: "FetchError",
+	request: testAPIRequest,
+	code: 501,
+});
+export const testRateLimitError = new RateLimitError({
+	limit: 5_000,
+	method: "GET",
+	path: "/user",
+	timeout: 60_000,
+});
+export const testRequestHandler = new RequestHandler(testRestManager);
 export const testCommand = new Command({ ...command, run: testNoop }, testClient);
 export const testAPIUser = {
 	avatar: null,
