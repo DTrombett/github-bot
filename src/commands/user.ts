@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { SlashCommandBuilder } from "@discordjs/builders";
 import type { CommandOptions } from "../Util";
 import { errorMessage, Numbers, showFollowers, userInfo } from "../Util";

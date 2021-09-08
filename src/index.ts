@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import type { ClientOptions } from "discord.js";
 import { Client, Constants, Options } from "discord.js";
 import { config } from "dotenv";

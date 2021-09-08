@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 /* eslint-disable prefer-const */
 import { bold, SlashCommandBuilder } from "@discordjs/builders";
 import { exec } from "child_process";
