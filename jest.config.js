@@ -8,5 +8,10 @@ module.exports = {
 	coverageDirectory: "coverage",
 	coverageProvider: "babel",
 	coverageReporters: ["text", "lcov", "clover"],
-	coveragePathIgnorePatterns: ["src/*.ts", "src/commands/*.ts"],
+	coveragePathIgnorePatterns: [
+		"/node_modules/",
+		"<rootDir>/src/*.ts",
+		"<rootDir>/src/commands/*.ts",
+	],
+	testPathIgnorePatterns: ["/node_modules/", "<rootDir>/src/*.ts", "<rootDir>/src/commands/*.ts"],
 };
