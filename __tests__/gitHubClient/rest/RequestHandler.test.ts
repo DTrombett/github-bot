@@ -1,16 +1,40 @@
-import { FetchError } from "node-fetch";
+import { FetchError, Headers, Response } from "node-fetch";
 import {
+	mockNodeFetch,
 	testAPIRequest,
 	testClient,
+	testGitHubAPIError,
 	testRequestHandler,
 	testRestManager,
 	testValidAPIRequest,
 } from "../..";
-import APIRequest from "../../../src/gitHubClient/rest/APIRequest";
 import GitHubAPIError from "../../../src/gitHubClient/rest/GitHubAPIError";
 import HTTPError from "../../../src/gitHubClient/rest/HTTPError";
 import RequestHandler from "../../../src/gitHubClient/rest/RequestHandler";
-import { UserData } from "../../../src/Util";
+
+mockNodeFetch()
+	.mockResolvedValueOnce(
+		new Response(JSON.stringify({ login: "DTrombett" }), {
+			headers: {
+				"x-ratelimit-limit": "60",
+				"x-ratelimit-remaining": "59",
+				"x-ratelimit-reset": `${Math.round(Date.now() / 1000) + 59 * 60}`,
+			},
+			statusText: "OK",
+		})
+	)
+	.mockRejectedValueOnce(testGitHubAPIError)
+	.mockResolvedValueOnce(
+		new Response(undefined, {
+			headers: {
+				"x-ratelimit-limit": "60",
+				"x-ratelimit-remaining": "58",
+				"x-ratelimit-reset": `${Math.round(Date.now() / 1000) + 59 * 60}`,
+			},
+			status: 204,
+			statusText: "No content",
+		})
+	);
 
 test("test the request handler", async () => {
 	// Test private methods
@@ -32,13 +56,13 @@ test("test the request handler", async () => {
 	let { globalReset } = testRequestHandler.manager;
 	testRequestHandler.manager.globalReset = Date.now() + 1000;
 	expect(testRequestHandler.limited).toBe(true);
-	await expect(testRequestHandler.push<UserData>(testValidAPIRequest)).resolves.toBeDefined();
+
+	// Test requests
+	await expect(testRequestHandler.push(testValidAPIRequest)).resolves.toBeDefined();
 	testRequestHandler.manager.globalRemaining = globalRemaining;
 	testRequestHandler.manager.globalReset = globalReset;
 	await expect(testRequestHandler.globalDelayFor(1)).resolves.toBeNull();
-	await expect(testClient.api.user.head<never>()).rejects.toBeInstanceOf(GitHubAPIError);
-	await expect(testClient.api.users.DTrombett.following("davi-fonto").get<never>()).resolves.toBe(
-		204
-	);
+	await expect(testClient.api.user.head()).rejects.toBeInstanceOf(GitHubAPIError);
+	await expect(testClient.api.users.DTrombett.following("davi-fonto").get()).resolves.toBe(204);
 	expect(testRequestHandler._inactive).toBe(true);
 });

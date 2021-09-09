@@ -16,7 +16,7 @@ import {
 const testInteraction = Interaction.prototype;
 const testCommandInteraction = new CommandInteraction(
 	testDiscordClient,
-	testCommandInteractionData({ data: { name: "dev", id: testId } })
+	testCommandInteractionData({ data: { name: "dev", id: testId, type: 1 } })
 );
 const testCommandInteractionUnexistent = new CommandInteraction(
 	testDiscordClient,
@@ -31,7 +31,7 @@ const testCommandInteractionInGuild = new CommandInteraction(
 	testCommandInteractionData({
 		member: testAPIGuildMember,
 		guild_id: testId,
-		data: { id: testId, name: "dev" },
+		data: { id: testId, name: "dev", type: 1 },
 	})
 );
 const testButtonInteractionUser = new ButtonInteraction(

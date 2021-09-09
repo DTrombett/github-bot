@@ -1,12 +1,13 @@
-import { Client } from "discord.js";
+import { ButtonInteraction, Client, CommandInteraction } from "discord.js";
 import { GitHubClient } from "../src/gitHubClient";
 import { Command } from "../src/Util/interactions";
 import { command } from "../src/commands/dev";
 import {
 	APIApplicationCommandInteraction,
-	APIMessage,
+	APIChatInputApplicationCommandInteraction,
 	APIMessageButtonInteractionData,
 	APIMessageComponentInteraction,
+	ApplicationCommandType,
 	ComponentType,
 	InteractionType,
 } from "discord-api-types/v9";
@@ -17,9 +18,28 @@ import { GitHubAPIError } from "../src/gitHubClient/rest/GitHubAPIError";
 import { HTTPError } from "../src/gitHubClient/rest/HTTPError";
 import { RateLimitError } from "../src/gitHubClient/rest/RateLimitError";
 import { RequestHandler } from "../src/gitHubClient/rest/RequestHandler";
+import nodeFetch from "node-fetch";
+import { RawInteractionData } from "discord.js/typings/rawDataTypes";
+import { any } from "superstruct";
 
 export type RecursivePartial<T> = {
 	[K in keyof T]?: RecursivePartial<T[K]>;
+};
+export type MockFunction<F extends (...args: any[]) => any> = jest.Mock<
+	ReturnType<F>,
+	Parameters<F>
+>;
+
+export const mockNodeFetch = (
+	fn?: (...args: Parameters<typeof nodeFetch>) => ReturnType<typeof nodeFetch>
+) => {
+	const mockFunc = jest.fn(fn);
+	jest.mock("node-fetch", () => ({
+		__esModule: true,
+		...jest.requireActual("node-fetch"),
+		default: mockFunc,
+	}));
+	return mockFunc;
 };
 
 export const testIntents = 0;
@@ -82,48 +102,49 @@ export const testAPIUser = {
 	username: testUsername,
 };
 export const testCommandInteractionData = (
-	data: Partial<APIApplicationCommandInteraction> = {}
-): APIApplicationCommandInteraction & { message: APIMessage } => ({
-	id: testId,
-	application_id: testId,
-	type: InteractionType.ApplicationCommand,
-	token: testToken,
-	version: 1,
-	data: {
+	data?: Partial<APIChatInputApplicationCommandInteraction>
+): typeof CommandInteraction extends new (arg0: any, arg1: infer T) => any ? T : never =>
+	({
 		id: testId,
-		name: "test",
-	},
-	channel_id: testId,
-	message: {
-		attachments: [],
-		author: testAPIUser,
+		application_id: testId,
+		type: InteractionType.ApplicationCommand,
+		token: testToken,
+		version: 1,
+		data: {
+			type: ApplicationCommandType.ChatInput,
+			id: testId,
+			name: "dev",
+		},
 		channel_id: testId,
-		content: "",
-		edited_timestamp: null,
-		embeds: [],
-		id: testId,
-		mention_everyone: false,
-		mention_roles: [],
-		mentions: [],
-		pinned: false,
-		timestamp: testTimestamp,
-		tts: false,
-		type: 0,
-	},
-	user: testAPIUser,
-	...data,
-});
+		message: {
+			attachments: [],
+			author: testAPIUser,
+			channel_id: testId,
+			content: "",
+			edited_timestamp: null,
+			embeds: [],
+			id: testId,
+			mention_everyone: false,
+			mention_roles: [],
+			mentions: [],
+			pinned: false,
+			timestamp: testTimestamp,
+			tts: false,
+			type: 0,
+		},
+		user: testAPIUser,
+		...data,
+	} as any);
 export const testButtonInteractionData = (
 	custom_id = testCustomId
-): APIMessageComponentInteraction & {
-	data: APIMessageButtonInteractionData;
-} & APIMessageButtonInteractionData => ({
-	...testCommandInteractionData(),
-	data: { component_type: ComponentType.Button, custom_id },
-	custom_id,
-	component_type: ComponentType.Button,
-	type: InteractionType.MessageComponent,
-});
+): typeof ButtonInteraction extends new (arg0: any, arg1: infer T) => any ? T : never =>
+	({
+		...testCommandInteractionData(),
+		data: { component_type: 2, custom_id },
+		custom_id,
+		component_type: ComponentType.Button,
+		type: 3,
+	} as any);
 export const testAPIGuildMember = {
 	deaf: false,
 	joined_at: testTimestamp,
