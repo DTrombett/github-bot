@@ -42,7 +42,7 @@
     "@sapphire/async-queue": "^1.1.9",
     "bufferutil": "^4.0.6",
     "discord-api-types": "^0.26.1",
-    "discord.js": "^13.5.0",
+    "discord.js": "^13.5.1",
     "dotenv": "^10.0.0",
     "node-fetch": "^2.6.1",
     "superstruct": "^0.15.3",
