@@ -17,7 +17,7 @@
   "author": "DTrombett",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.17.2",
+    "@babel/core": "^7.17.3",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
     "@tsconfig/node16": "^1.0.2",
