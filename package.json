@@ -47,7 +47,7 @@
     "node-fetch": "^2.6.1",
     "superstruct": "^0.15.4",
     "tslib": "^2.3.1",
-    "utf-8-validate": "^5.0.8",
+    "utf-8-validate": "^5.0.9",
     "winston": "^3.6.0",
     "zlib-sync": "^0.1.7"
   }
