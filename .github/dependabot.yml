@@ -4,12 +4,13 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+      time: "15:00"
+      timezone: "Europe/Rome"
     assignees:
       - "DTrombett"
     commit-message:
       prefix: "deps"
       prefix-development: "devDeps"
       include: "scope"
-    open-pull-requests-limit: 10
     reviewers:
       - "DTrombett"
