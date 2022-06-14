@@ -45,7 +45,7 @@
     "discord.js": "^13.8.0",
     "dotenv": "^16.0.1",
     "node-fetch": "^2.6.1",
-    "superstruct": "^0.15.4",
+    "superstruct": "^0.16.0",
     "tslib": "^2.4.0",
     "utf-8-validate": "^5.0.9",
     "winston": "^3.7.2",
