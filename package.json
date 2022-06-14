@@ -19,7 +19,7 @@
   "devDependencies": {
     "@babel/core": "^7.18.5",
     "@babel/preset-env": "^7.17.10",
-    "@babel/preset-typescript": "^7.16.7",
+    "@babel/preset-typescript": "^7.17.12",
     "@tsconfig/node16": "^1.0.3",
     "@types/babel__core": "^7.1.19",
     "@types/jest": "^28.1.1",
